@@ -1,0 +1,47 @@
+.apply_space{
+    width: 45%;
+}
+
+.button_yaml{
+    width: 50px;
+    height: 50px;     
+    top: 50%;
+    border: 2px solid black;
+    margin: auto;
+    left: 0;
+    right: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    -webkit-animation: example 10s infinite; /* Safari 4.0 - 8.0 */ 
+    animation: example 10s infinite;
+   cursor: pointer;
+}
+
+/* Safari 4.0 - 8.0 */
+@-webkit-keyframes example {
+    0%   {border-color: #FF851B;}
+    25%  {border-color: #0074D9;}
+    50%  {border-color: #F012BE;}
+    75%  {border-color: #B10DC9;}
+    100% {border-color: #001f3f;}
+    
+  }
+  
+  /* Standard syntax */
+  @keyframes example {
+    0%   {border-color: #FF851B;}
+    25%  {border-color: #0074D9;}
+    50%  {border-color: #F012BE;}
+    75%  {border-color: #B10DC9;}
+    100% {border-color: #001f3f;}
+  }
+
+.coversion{
+    width: 21px;
+    margin-left: 12px;
+    margin-top: 16px;
+}
+.clear_code{
+    float: right;
+    margin-top: 8px;
+}
