@@ -7,9 +7,9 @@ import (
 	"strings"
 	//	"io/ioutil"
 	"go/format"
-	//"log"
 	//"os"
 
+	"github.com/PrasadG193/kubectl2go/pkg/importer"
 	"k8s.io/client-go/kubernetes/scheme"
 	//"k8s.io/apimachinery/pkg/runtime"
 )
@@ -39,15 +39,15 @@ func (c *CodeGen) Generate() (code string, err error) {
 
 	// Create kubeclient
 	c.AddKubeClient()
-
+	// Add methods to kubeclient
 	c.AddKubeManage()
+
+	i := importer.New(c.Kind, c.Group, c.Version, c.KubeObject)
+	c.Imports, c.KubeObject = i.FindImports()
 
 	return c.PrettyCode()
 
-	//fun.AddImports(obj)
-	//fun.AddBody()
-	//fun.printfunc()
-
+	// ---------------------------------------------------
 	// trim object type
 	//specs := strings.SplitN(fun.kubeobject, "{", 2)[1]
 	//specs = "{"+specs
@@ -136,8 +136,8 @@ func (c *CodeGen) AddKubeClient() {
 
 func (c *CodeGen) AddKubeManage() {
 	// TODO: dynamic methods
-	c.KubeManage = fmt.Sprintf(`fmt.Println("Creating deployment...")
-        result, err := kubeclient.Create(deployment)
+	c.KubeManage = fmt.Sprintf(`fmt.Println("Creating %s...")
+        result, err := kubeclient.Create(object)
         if err != nil {
                 panic(err)
         }
@@ -176,5 +176,11 @@ func prettyStruct(obj string) string {
 	obj = strings.ReplaceAll(obj, ", ", ",\n")
 	obj = strings.ReplaceAll(obj, "{", " {\n")
 	obj = strings.ReplaceAll(obj, "}", ",\n}")
-	return obj
+
+	// Run gofmt
+	goFormat, err := format.Source([]byte(obj))
+	if err != nil {
+		fmt.Println("gofmt error", err)
+	}
+	return string(goFormat)
 }
