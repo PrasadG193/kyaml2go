@@ -1,22 +1,26 @@
 package generator
 
 import (
-	//"bufio"
-	//"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
-	//	"io/ioutil"
 	"go/format"
-	//"os"
 
 	"github.com/PrasadG193/kubectl2go/pkg/importer"
 	"k8s.io/client-go/kubernetes/scheme"
-	//"k8s.io/apimachinery/pkg/runtime"
+)
+
+
+type KubeMethod string
+const (
+	MethodCreate = "create"
+	MethodUpdate = "update"
+	MethodDelete = "delete"
 )
 
 type CodeGen struct {
 	Raw          []byte
+	Method KubeMethod
 	Kind         string
 	Group        string
 	Version      string
@@ -27,9 +31,14 @@ type CodeGen struct {
 	KubeManage   string
 }
 
-func New(raw []byte) CodeGen {
+func (m KubeMethod) String() string {
+	return string(m)
+}
+
+func New(raw []byte, method KubeMethod) CodeGen {
 	return CodeGen{
 		Raw: raw,
+		Method: method,
 	}
 }
 
@@ -49,46 +58,6 @@ func (c *CodeGen) Generate() (code string, err error) {
 	c.Imports, c.KubeObject = i.FindImports()
 
 	return c.PrettyCode()
-
-	// ---------------------------------------------------
-	// trim object type
-	//specs := strings.SplitN(fun.kubeobject, "{", 2)[1]
-	//specs = "{"+specs
-
-	//deploy := (*appsv1.Deployment).fun.kubeobject
-
-	//jsonData, err := json.Marshal(obj)
-	//fmt.Printf("%+s %+v\n", string(jsonData), err)
-
-	//var mapper appsv1.Deployment
-	//err = json.Unmarshal([]byte(jsonData), &mapper)
-	//if err != nil {
-	//	log.Fatalf("cannot unmarshal data: %v", err)
-	//}
-	//fmt.Printf("aunmarshal data::\n%+v\n", mapper)
-
-	//	var yamlData appsv1.Deployment
-	//	err = yaml.Unmarshal([]byte(data), &yamlData)
-	//	if err != nil {
-	//		log.Fatalf("cannot unmarshal data: %v", err)
-	//	}
-	//	//fmt.Printf("%s\n unmarshal data::\n%#v\n", data, um)
-	//
-	//
-	//	//var um map[string]interface{}
-	//	jsonData, err := json.Marshal(yamlData)
-	//	if err != nil {
-	//		log.Fatalf("cannot marshal data: %v", err)
-	//	}
-	//	fmt.Printf("jsonData::\n%#v\n", string(jsonData))
-	//	//yamlData := []byte(data)
-	//
-	//	var um appsv1.Deployment
-	//	err = yaml.Unmarshal(jsonData, &um)
-	//	if err != nil {
-	//		log.Fatalf("cannot unmarshal data: %v", err)
-	//	}
-	//	fmt.Printf("%s\n unmarshal data::\n%#v\n", data, um)
 }
 
 func (c *CodeGen) AddKubeObject() error {
@@ -137,12 +106,12 @@ func (c *CodeGen) AddKubeClient() {
 
 func (c *CodeGen) AddKubeManage() {
 	// TODO: dynamic methods
-	c.KubeManage = fmt.Sprintf(`fmt.Println("Creating %s...")
-        _, err = kubeclient.Create(object)
+	c.KubeManage = fmt.Sprintf(`fmt.Println("%s %s...")
+        _, err = kubeclient.%s(object)
         if err != nil {
                 panic(err)
         }
-	`, c.Kind)
+	`, strings.Title(c.Method.String()), c.Kind, strings.Title(c.Method.String()))
 }
 
 func (c *CodeGen) PrettyCode() (code string, err error) {

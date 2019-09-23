@@ -38,7 +38,7 @@ func main() {
 		log.Fatal("Error while reading input:", err)
 	}
 
-	gen := generator.New([]byte(data))
+	gen := generator.New([]byte(data), "create")
 	code, err := gen.Generate()
 	if err != nil {
 		log.Fatal(err)
