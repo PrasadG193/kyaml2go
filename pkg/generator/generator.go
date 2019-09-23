@@ -3,6 +3,7 @@ package generator
 import (
 	//"bufio"
 	//"encoding/json"
+	"regexp"
 	"fmt"
 	"strings"
 	//	"io/ioutil"
@@ -19,6 +20,7 @@ type CodeGen struct {
 	Kind       string
 	Group      string
 	Version    string
+	ReplicaCount string
 	Imports    string
 	KubeClient string
 	KubeObject string
@@ -42,6 +44,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 	// Add methods to kubeclient
 	c.AddKubeManage()
 
+	c.CleanupObject()
 	i := importer.New(c.Kind, c.Group, c.Version, c.KubeObject)
 	c.Imports, c.KubeObject = i.FindImports()
 
@@ -103,20 +106,17 @@ func (c *CodeGen) AddKubeObject() error {
 	c.Group = strings.Title(objMeta.Group)
 	c.Version = strings.Title(objMeta.Version)
 
+	// Add replica pointer function
+	var re = regexp.MustCompile(`(?m)replicas: ([0-9]+)`)
+	matched := re.FindAllStringSubmatch(string(c.Raw), -1)
+	if len(matched) == 1 && len(matched[0]) == 2 {
+		c.ReplicaCount = matched[0][1]
+	}
+
 	// Pretty struct
 	c.KubeObject = prettyStruct(fmt.Sprintf("%#v", obj))
 	return nil
 }
-
-//func (f *function) AddImports(obj runtime.Object) {
-//	f.imports += fmt.Sprintf(`
-//		"fmt"
-//		"os"
-//
-//		"k8s.io/client-go/kubernetes"
-//		"k8s.io/client-go/tools/clientcmd"
-//	`)
-//}
 
 func (c *CodeGen) AddKubeClient() {
 	// TODO: dynamic namespace
@@ -137,11 +137,11 @@ func (c *CodeGen) AddKubeClient() {
 func (c *CodeGen) AddKubeManage() {
 	// TODO: dynamic methods
 	c.KubeManage = fmt.Sprintf(`fmt.Println("Creating %s...")
-        result, err := kubeclient.Create(object)
+        _, err = kubeclient.Create(object)
         if err != nil {
                 panic(err)
         }
-	`)
+	`, c.Kind)
 }
 
 func (c *CodeGen) PrettyCode() (code string, err error) {
@@ -164,12 +164,32 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 	}
 	`, c.Imports, c.KubeClient, c.KubeObject, c.KubeManage)
 
+	// Add replica pointer function
+	main += addReplicaFunc()
+
 	// Run gofmt
 	goFormat, err := format.Source([]byte(main))
 	if err != nil {
 		return code, fmt.Errorf("go fmt error: %s", err.Error())
 	}
 	return string(goFormat), nil
+}
+
+func (c *CodeGen) CleanupObject() {
+	kubeObject := strings.Split(c.KubeObject, "\n")
+	kubeObject = RemoveSubObject(kubeObject, "CreationTimestamp")
+	kubeObject = RemoveSubObject(kubeObject, "Status:")
+	kubeObject = RemoveNilFields(kubeObject)
+	kubeObject = c.MatchLabelsStruct(kubeObject)
+	if len(c.ReplicaCount) > 0 {
+		kubeObject = AddReplicaPointer(c.ReplicaCount, kubeObject)
+	}
+	c.KubeObject = ""
+	for _, l := range(kubeObject) {
+		if len(l) != 0 {
+			c.KubeObject += l+"\n"
+		}
+	}
 }
 
 func prettyStruct(obj string) string {
@@ -183,4 +203,76 @@ func prettyStruct(obj string) string {
 		fmt.Println("gofmt error", err)
 	}
 	return string(goFormat)
+}
+
+func addReplicaFunc() string {
+	return fmt.Sprintf(`func int32Ptr(i int32) *int32 { return &i }`)
+}
+
+func RemoveNilFields(kubeobject []string) []string {
+	nilFields := []string{"nil", "\"\","}
+	for i, line := range kubeobject {
+		for _, n := range nilFields {
+			if strings.Contains(line, n) {
+				kubeobject[i] = ""
+			}
+		}
+	}
+	return kubeobject
+}
+
+func RemoveSubObject(object []string, objectName string) []string {
+	depth := 0
+	for i, line := range object {
+		if strings.Contains(line, objectName) {
+			object[i] = ""
+			depth = 1
+			continue
+		}
+		if depth > 0 {
+			object[i] = ""
+			if strings.Contains(line, "{") {
+				depth += 1
+				continue
+			}
+			if strings.Contains(line, "}") {
+				depth -= 1
+				continue
+			}
+		}
+	}
+	return object
+}
+
+func AddReplicaPointer(replicaCount string, kubeobject []string) []string {
+	for i, _ := range kubeobject {
+		if strings.Contains(kubeobject[i], "Replicas") {
+			kubeobject[i] = fmt.Sprintf("Replicas: int32Ptr(%s),", replicaCount)
+		}
+	}
+	return kubeobject
+}
+
+func (c CodeGen)MatchLabelsStruct(kubeobject []string) []string {
+	var re = regexp.MustCompile(`(?ms)matchLabels:(?:[\s]*([a-zA-Z]+):\s?([a-zA-Z]+))*`)
+	matched := re.FindAllStringSubmatch(string(c.Raw), -1)
+	if len(matched) != 1 || len(matched[0]) != 3 {
+		return kubeobject
+	}
+
+	labels := ""
+	for i, _ := range matched {
+		labels += fmt.Sprintf("\"%s\": \"%s\",\n", matched[i][1], matched[i][2])
+	}
+
+	for i, _ := range(kubeobject) {
+		if strings.Contains(kubeobject[i], "Selector:") {
+			kubeobject[i] = fmt.Sprintf(`Selector: &v1.LabelSelector{
+                                MatchLabels: map[string]string{
+                                        %s
+                                },
+                        },`, labels)
+		}
+	}
+	return kubeobject
 }

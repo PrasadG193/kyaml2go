@@ -66,8 +66,6 @@ func (i *ImportManager) RenamePackages() {
 	// Split kubeobject to read it line by line
 	kubeObject := strings.Split(i.Object, "\n")
 	// Remove Creation TimeStamp
-	kubeObject = RemoveSubObject(kubeObject, "CreationTimestamp")
-	kubeObject = RemoveSubObject(kubeObject, "Status:")
 	// Refactor kubeobject
 	i.Object = ""
 	s := stack.New()
@@ -79,13 +77,12 @@ func (i *ImportManager) RenamePackages() {
 		matched := re.FindAllStringSubmatch(line, -1)
 
 		// Remove nil fields
-		if ifContainsNilFields(line) {
-			continue
-		}
+		//if ifContainsNilFields(line) {
+		//	continue
+		//}
 
 		// Line has external package
 		if strings.EqualFold(line, "},") {
-			fmt.Println("---------------------------------------------------------------")
 			if p, ok := s.Pop(); ok {
 				parentPkg, _ := vp.Top()
 				if reflect.DeepEqual(parentPkg, p) {
@@ -153,35 +150,3 @@ func (i *ImportManager) RenamePackages() {
 	}
 }
 
-func ifContainsNilFields(line string) bool {
-	if strings.Contains(line, "nil") {
-		return true
-	}
-	if strings.Contains(line, "\"\",") {
-		return true
-	}
-	return false
-}
-
-func RemoveSubObject(object []string, objectName string) []string {
-	depth := 0
-	for i, line := range object {
-		if strings.Contains(line, objectName) {
-			object[i] = ""
-			depth = 1
-			continue
-		}
-		if depth > 0 {
-			object[i] = ""
-			if strings.Contains(line, "{") {
-				depth += 1
-				continue
-			}
-			if strings.Contains(line, "}") {
-				depth -= 1
-				continue
-			}
-		}
-	}
-	return object
-}
