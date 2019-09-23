@@ -107,14 +107,19 @@ func (i *ImportManager) RenamePackages() {
 			if strings.Contains(line, "{") {
 				s.Push(version)
 			}
-			i.Imports[version] = ""
+
 			i.Object += line + "\n"
+			// Non kind imports e.g 
+			if v, ok := kube.ApiPkgMap[version]; ok {
+				version = v
+			}
+			i.Imports[version] = ""
 			continue
 		}
 
 		// If valid kind e.g Pod
 		// If not use parent package
-		for k, _ := range(kube.KindApiMap) {
+		for k, _ := range kube.KindApiMap {
 			if strings.Contains(kind, k) {
 				kind = k
 			}
@@ -149,4 +154,3 @@ func (i *ImportManager) RenamePackages() {
 		i.Object += strings.Replace(line, version, importAs, 1) + "\n"
 	}
 }
-

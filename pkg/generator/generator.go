@@ -3,8 +3,8 @@ package generator
 import (
 	//"bufio"
 	//"encoding/json"
-	"regexp"
 	"fmt"
+	"regexp"
 	"strings"
 	//	"io/ioutil"
 	"go/format"
@@ -16,15 +16,15 @@ import (
 )
 
 type CodeGen struct {
-	Raw        []byte
-	Kind       string
-	Group      string
-	Version    string
+	Raw          []byte
+	Kind         string
+	Group        string
+	Version      string
 	ReplicaCount string
-	Imports    string
-	KubeClient string
-	KubeObject string
-	KubeManage string
+	Imports      string
+	KubeClient   string
+	KubeObject   string
+	KubeManage   string
 }
 
 func New(raw []byte) CodeGen {
@@ -89,8 +89,6 @@ func (c *CodeGen) Generate() (code string, err error) {
 	//		log.Fatalf("cannot unmarshal data: %v", err)
 	//	}
 	//	fmt.Printf("%s\n unmarshal data::\n%#v\n", data, um)
-
-	return code, nil
 }
 
 func (c *CodeGen) AddKubeObject() error {
@@ -104,6 +102,9 @@ func (c *CodeGen) AddKubeObject() error {
 	objMeta := obj.GetObjectKind().GroupVersionKind()
 	c.Kind = strings.Title(objMeta.Kind)
 	c.Group = strings.Title(objMeta.Group)
+	if len(c.Group) == 0 {
+		c.Group = "Core"
+	}
 	c.Version = strings.Title(objMeta.Version)
 
 	// Add replica pointer function
@@ -165,7 +166,9 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 	`, c.Imports, c.KubeClient, c.KubeObject, c.KubeManage)
 
 	// Add replica pointer function
-	main += addReplicaFunc()
+	if len(c.ReplicaCount) > 0 {
+		main += addReplicaFunc()
+	}
 
 	// Run gofmt
 	goFormat, err := format.Source([]byte(main))
@@ -185,9 +188,9 @@ func (c *CodeGen) CleanupObject() {
 		kubeObject = AddReplicaPointer(c.ReplicaCount, kubeObject)
 	}
 	c.KubeObject = ""
-	for _, l := range(kubeObject) {
+	for _, l := range kubeObject {
 		if len(l) != 0 {
-			c.KubeObject += l+"\n"
+			c.KubeObject += l + "\n"
 		}
 	}
 }
@@ -253,7 +256,7 @@ func AddReplicaPointer(replicaCount string, kubeobject []string) []string {
 	return kubeobject
 }
 
-func (c CodeGen)MatchLabelsStruct(kubeobject []string) []string {
+func (c CodeGen) MatchLabelsStruct(kubeobject []string) []string {
 	var re = regexp.MustCompile(`(?ms)matchLabels:(?:[\s]*([a-zA-Z]+):\s?([a-zA-Z]+))*`)
 	matched := re.FindAllStringSubmatch(string(c.Raw), -1)
 	if len(matched) != 1 || len(matched[0]) != 3 {
@@ -265,7 +268,7 @@ func (c CodeGen)MatchLabelsStruct(kubeobject []string) []string {
 		labels += fmt.Sprintf("\"%s\": \"%s\",\n", matched[i][1], matched[i][2])
 	}
 
-	for i, _ := range(kubeobject) {
+	for i, _ := range kubeobject {
 		if strings.Contains(kubeobject[i], "Selector:") {
 			kubeobject[i] = fmt.Sprintf(`Selector: &v1.LabelSelector{
                                 MatchLabels: map[string]string{
