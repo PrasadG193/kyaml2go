@@ -22,6 +22,7 @@ type CodeGen struct {
 	Raw          []byte
 	Method       KubeMethod
 	Name         string
+	Namespace    string
 	Kind         string
 	Group        string
 	Version      string
@@ -81,17 +82,25 @@ func (c *CodeGen) AddKubeObject() error {
 	c.Version = strings.Title(objMeta.Version)
 
 	// Add replica pointer function
-	var re = regexp.MustCompile(`(?m)replicas: ([0-9]+)`)
+	var re = regexp.MustCompile(`replicas:\s?([0-9]+)`)
 	matched := re.FindAllStringSubmatch(string(c.Raw), -1)
 	if len(matched) == 1 && len(matched[0]) == 2 {
 		c.ReplicaCount = matched[0][1]
 	}
 
 	// Add object name
-	re = regexp.MustCompile(`(?m)metadata:(?:[\s]+name:\s?([-a-zA-Z]+))*`)
+	re = regexp.MustCompile(`name:\s?"?([-a-zA-Z]+)`)
 	matched = re.FindAllStringSubmatch(string(c.Raw), -1)
 	if len(matched) >= 1 && len(matched[0]) == 2 {
 		c.Name = matched[0][1]
+	}
+
+	// Add Namespace
+	c.Namespace = "default"
+	re = regexp.MustCompile(`namespace:\s?"?([-a-zA-Z]+)`)
+	matched = re.FindAllStringSubmatch(string(c.Raw), -1)
+	if len(matched) >= 1 && len(matched[0]) == 2 {
+		c.Namespace = matched[0][1]
 	}
 
 	// Pretty struct
@@ -111,8 +120,8 @@ func (c *CodeGen) AddKubeClient() {
         if err != nil {
                 panic(err)
         }
-        kubeclient := clientset.%s%s().%ss("default")
-	`, c.Group, c.Version, c.Kind)
+        kubeclient := clientset.%s%s().%ss("%s")
+	`, c.Group, c.Version, c.Kind, c.Namespace)
 }
 
 func (c *CodeGen) AddKubeManage() {
@@ -128,7 +137,6 @@ func (c *CodeGen) AddKubeManage() {
 		param := fmt.Sprintf(`"%s", &metav1.DeleteOptions{}`, c.Name)
 		method = fmt.Sprintf("err = kubeclient.%s(%s)", strings.Title(c.Method.String()), param)
 	}
-
 
 	c.KubeManage = fmt.Sprintf(`fmt.Println("%s %s...")
 	%s
