@@ -3,13 +3,13 @@ package serve
 import (
 	"fmt"
 	"io"
-	"log"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/PrasadG193/kubectl2go/pkg/generator"
+	"github.com/julienschmidt/httprouter"
 )
 
 func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -26,6 +26,6 @@ func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(body), method,  err)
+	fmt.Println(string(body), method, err)
 	io.WriteString(w, code)
 }

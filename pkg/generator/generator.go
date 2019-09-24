@@ -2,16 +2,16 @@ package generator
 
 import (
 	"fmt"
+	"go/format"
 	"regexp"
 	"strings"
-	"go/format"
 
 	"github.com/PrasadG193/kubectl2go/pkg/importer"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-
 type KubeMethod string
+
 const (
 	MethodCreate = "create"
 	MethodUpdate = "update"
@@ -20,7 +20,7 @@ const (
 
 type CodeGen struct {
 	Raw          []byte
-	Method KubeMethod
+	Method       KubeMethod
 	Kind         string
 	Group        string
 	Version      string
@@ -37,7 +37,7 @@ func (m KubeMethod) String() string {
 
 func New(raw []byte, method KubeMethod) CodeGen {
 	return CodeGen{
-		Raw: raw,
+		Raw:    raw,
 		Method: method,
 	}
 }

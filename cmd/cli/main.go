@@ -1,49 +1,83 @@
 package main
 
 import (
-	//"encoding/json"
-	"bufio"
-	"os"
 	"fmt"
-	//	"io/ioutil"
+	"github.com/urfave/cli"
+	"io/ioutil"
 	"log"
-	//	"bytes"
+	"os"
 
-	//	"gopkg.in/yaml.v2"
-	//"k8s.io/client-go/pkg/api"
-	//"k8s.io/apimachinery/pkg/runtime/serializer"
-	//	"k8s.io/apimachinery/pkg/util/yaml"
-	//"github.com/davecgh/go-spew/spew"
-	//"k8s.io/api/core/v1"
-	//"k8s.io/api/extensions/v1beta1"
-	//appsv1 "k8s.io/api/apps/v1"
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/PrasadG193/kubectl2go/pkg/generator"
+	gen "github.com/PrasadG193/kubectl2go/pkg/generator"
 )
 
 func main() {
-	if len(os.Args) > 1 {
-		//printHelp(os.Args[1])
-		os.Exit(0)
+
+	app := cli.NewApp()
+	app.Name = "kubectl2go"
+	app.Usage = "Generate go code to manage Kubernetes resources using go-client sdks"
+
+	app.Commands = []cli.Command{
+		{
+			Name:  "create",
+			Usage: "Generate code for creating a resource",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:     "file, f",
+					Usage:    "K8s resource spec yaml file",
+					Required: true,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return generate(c.String("file"), gen.MethodCreate)
+			},
+		},
+		{
+			Name:  "update",
+			Usage: "Generate code for updating a resource",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:     "file, f",
+					Usage:    "K8s resource spec yaml file",
+					Required: true,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return generate(c.String("file"), gen.MethodUpdate)
+			},
+		},
+		{
+			Name:  "delete",
+			Usage: "Generate code for deleting a resource",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:     "file, f",
+					Usage:    "K8s resource spec yaml file",
+					Required: true,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return generate(c.String("file"), gen.MethodDelete)
+			},
+		},
 	}
 
-	// Read input from the console
-	var data string
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		data += scanner.Text() + "\n"
-	}
-	if err := scanner.Err(); err != nil {
-		log.Fatal("Error while reading input:", err)
-	}
-
-	gen := generator.New([]byte(data), "create")
-	code, err := gen.Generate()
+	// Run app
+	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(code)
 }
 
-
+func generate(path string, method gen.KubeMethod) error {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return cli.NewExitError(fmt.Errorf("error: the path %s does not exist", path), 1)
+	}
+	gen := gen.New(b, method)
+	code, err := gen.Generate()
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+	fmt.Println(code)
+	return nil
+}

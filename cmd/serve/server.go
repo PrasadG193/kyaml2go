@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/PrasadG193/kubectl2go/pkg/serve"
+	"github.com/julienschmidt/httprouter"
 )
 
 const API_VERSION = "v1"

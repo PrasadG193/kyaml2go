@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/julienschmidt/httprouter v1.2.0
+	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect

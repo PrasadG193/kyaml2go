@@ -109,7 +109,7 @@ func (i *ImportManager) RenamePackages() {
 			}
 
 			i.Object += line + "\n"
-			// Non kind imports e.g 
+			// Non kind imports e.g
 			if v, ok := kube.ApiPkgMap[version]; ok {
 				version = v
 			}
