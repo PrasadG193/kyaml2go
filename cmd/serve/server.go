@@ -7,6 +7,7 @@ import (
 
 	"github.com/PrasadG193/kubectl2go/pkg/serve"
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/cors"
 )
 
 const API_VERSION = "v1"
@@ -17,5 +18,7 @@ func main() {
 	log.Printf("server started accepting requests on port=%s..\n", PORT)
 	router.POST("/v1/convert", serve.HandleConvert)
 	router.POST(fmt.Sprintf("/convert", API_VERSION), serve.HandleConvert)
-	log.Fatal(http.ListenAndServe(":8080", router))
+
+	handler := cors.Default().Handler(router)
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
