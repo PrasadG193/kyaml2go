@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Kubectl2Go</title>
+    <!--Bootstrap version 4.3.1-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="./style.css"/>
+    <link rel="icon" type="image/gif/png" href="image/k2go.png" />
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.min.js"
+      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+      crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  </head>
+  <body>
+    
+    <main role="main">
+      <!-- Main jumbotron for a primary marketing message or call to action -->
+      <div class="jumbotron d-flex">        
+          <img src="./image/k2go.png" style="height: 102px">
+          <div class="infoData">
+            <p class="k2Go">
+              Kubectl2Go
+            </p>
+            <p class="secondaryData">
+              Go client code generator for Kubernetes resource specs
+            </p>   
+        </div>      
+      </div>  
+      <div class="container">
+        <div class="modify">
+          <button type="button" class="btn btn-primary mr-3 ml-3" id="createGO">Create</button>
+          <button type="button" class="btn btn-secondary mr-3 ml-3" id="updateGO">Update</button>
+          <button type="button" class="btn btn-danger mr-3 ml-3" id="deleteGO"> Delete</button>
+        </div>
+        <!-- Example row of columns -->
+        <div class="position-relative row d-flex justify-content-between mt-4">        
+          <div class="position-relative form-group apply_space">
+            <label for="yaml">YAML</label>
+            <textarea class="form-control" id="yamlGenerator" rows="15"></textarea>
+            <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearYaml"/>
+          </div>
+          <div class="button_yaml">
+            <img src="./image/img_arrow.png" alt="yaml2go" class="coversion"/>           
+          </div>
+          <i class="glyphicon glyphicon-calendar"></i>
+          <div class="position-relative form-group apply_space">
+            <label for="goGenerator" class="go-float">GO</label>
+            <textarea class="form-control" id="goGenerator" rows="15"></textarea>
+            <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearGo"/>
+          </div>              
+        </div>  
+        <hr>  
+      </div> <!-- /container -->  
+    </main>
+    <script src="./index.js"></script>
+</body>
+</html>
