@@ -4,7 +4,6 @@ let go = document.getElementById("goGenerator")
 
 
 window.generatorCall=function (api){
-  console.log('Env Port', process.env.KUBECTL2GO_HOST)
   let yamlData  = document.getElementById("yamlGenerator").value
   document.getElementById('yamlGenerator').style.border = "1px solid #ced4da"
   console.log(yamlData)
