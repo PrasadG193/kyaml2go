@@ -1,11 +1,12 @@
-const URL = "http://192.168.1.179:8080/v1/convert?method="
-// const data = ``
+const URL = "http://localhost:8080/v1/convert?method="
 
 let go = document.getElementById("goGenerator")
 
 
 window.generatorCall=function (api){
+  console.log('Env Port', process.env.KUBECTL2GO_HOST)
   let yamlData  = document.getElementById("yamlGenerator").value
+  document.getElementById('yamlGenerator').style.border = "1px solid #ced4da"
   console.log(yamlData)
   $.ajax({
     'url' : `${URL}${api}`,
@@ -16,7 +17,8 @@ window.generatorCall=function (api){
     },
     'error' : function(request,error)
     { 
-        alert('Something is fishy')      
+      document.getElementById('yamlGenerator').style.border = "1px solid red"
+      alert('Something is fishy')      
     }
   });
 
@@ -24,7 +26,7 @@ window.generatorCall=function (api){
 
 //Create Function
 document.getElementById("createGO").addEventListener('click', ()=>{
-  generatorCall('create')
+   generatorCall('create')
 })
 
 //Update Function
