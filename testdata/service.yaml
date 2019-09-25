@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  labels:
+    app: mysql
+spec:
+  ports:
+    - name: server
+      port: 8080
+      targetPort: 5000
+      protocol: TCP
+  type: ClusterIP
+  selector:
+    app: mysql

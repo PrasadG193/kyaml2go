@@ -54,10 +54,6 @@ func (i *ImportManager) FindImports() (string, string) {
 	return imports, i.Object
 }
 
-//func (i *ImportManager) ListUsedPackages() [][]string {
-// Find all external package structs used in having format "pkg.StructName"
-//}
-
 // RenamePackages renames packages having same name and modifies the kubeobject accordingly
 // e.g        v1 -> corev1
 //       apps/v1 -> appsv1
@@ -65,23 +61,14 @@ func (i *ImportManager) FindImports() (string, string) {
 func (i *ImportManager) RenamePackages() {
 	// Split kubeobject to read it line by line
 	kubeObject := strings.Split(i.Object, "\n")
-	// Remove Creation TimeStamp
-	// Refactor kubeobject
 	i.Object = ""
+	// Stack to store imported struct's pkg name
 	s := stack.New()
+	// Stack to store imported valid k8s struct's pkg name
 	vp := stack.New()
 	for _, line := range kubeObject {
-		//fmt.Printf("\n line: %s\n", line)
-		//fmt.Printf("STACK=%+v\nVSTACK=%+v\n", s, vp)
-		var re = regexp.MustCompile(PACKAGE_FORMAT)
-		matched := re.FindAllStringSubmatch(line, -1)
-
-		// Remove nil fields
-		//if ifContainsNilFields(line) {
-		//	continue
-		//}
-
-		// Line has external package
+		// Check if end of the struct
+		// Pop package names from stack
 		if strings.EqualFold(line, "},") {
 			if p, ok := s.Pop(); ok {
 				parentPkg, _ := vp.Top()
@@ -93,14 +80,15 @@ func (i *ImportManager) RenamePackages() {
 			continue
 		}
 
-		// Line does not container external package
+		// Line has external package
+		var re = regexp.MustCompile(PACKAGE_FORMAT)
+		matched := re.FindAllStringSubmatch(line, -1)
 		if len(matched) != 1 || len(matched[0]) != 3 {
 			i.Object += line + "\n"
 			continue
 		}
 
 		_, version, kind := matched[0][0], matched[0][1], matched[0][2]
-		//fmt.Printf("%+v %+v %+v\n", verkind, version, kind)
 		// New struct started
 		// if kubernetes resource, e.g v1.ObjectMeta
 		if _, found := kube.ApiVersions[version]; !found {
@@ -109,7 +97,7 @@ func (i *ImportManager) RenamePackages() {
 			}
 
 			i.Object += line + "\n"
-			// Non kind imports e.g
+			// Extract package name from full path
 			if v, ok := kube.ApiPkgMap[version]; ok {
 				version = v
 			}
@@ -117,18 +105,16 @@ func (i *ImportManager) RenamePackages() {
 			continue
 		}
 
-		// If valid kind e.g Pod
-		// If not use parent package
+		// If part of valid kind e.g PodSpec
 		for k, _ := range kube.KindApiMap {
 			if strings.Contains(kind, k) {
 				kind = k
 			}
 		}
+
+		// If not valid kind
 		group, found := kube.KindApiMap[kind]
 		if !found {
-			//if strings.Contains(line, "{") {
-			//	s.Push(version)
-			//}
 			// If group is nil, use parent package
 			if importAs, ok := vp.Top(); ok {
 				// Modify imported struct name
@@ -139,9 +125,7 @@ func (i *ImportManager) RenamePackages() {
 			continue
 		}
 
-		//s.Push(kube.ApiPkgMap[group])
-		//importAs := version
-		//i.Imports[kube.ApiPkgMap[group]] = version
+		// Extract package name from complete package path
 		p := strings.Split(kube.ApiPkgMap[group], "/")
 		importAs := p[len(p)-1] + version
 		if strings.Contains(line, "{") {

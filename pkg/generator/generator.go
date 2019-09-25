@@ -105,6 +105,7 @@ func (c *CodeGen) AddKubeObject() error {
 
 	// Pretty struct
 	c.KubeObject = prettyStruct(fmt.Sprintf("%#v", obj))
+	//fmt.Printf("%s\n\n", c.KubeObject)
 	return nil
 }
 
