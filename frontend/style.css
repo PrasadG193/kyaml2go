@@ -14,7 +14,7 @@
     background-position: center;
     -webkit-animation: example 10s infinite; /* Safari 4.0 - 8.0 */ 
     animation: example 10s infinite;
-   cursor: pointer;
+    border-radius: 50%
 }
 
 /* Safari 4.0 - 8.0 */
