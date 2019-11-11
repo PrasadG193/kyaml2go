@@ -1,6 +1,6 @@
-module github.com/PrasadG193/kubectl2go
+module github.com/PrasadG193/kgoclient-gen
 
-go 1.12
+go 1.13
 
 require (
 	github.com/imdario/mergo v0.3.7 // indirect

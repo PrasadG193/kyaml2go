@@ -6,8 +6,8 @@ TAG=$(shell cut -d'=' -f2- .release)
 
 #Build the binary
 build: pre-build
-	@cd cmd/cli;GOOS_VAL=$(shell go env GOOS) GOARCH_VAL=$(shell go env GOARCH) go build -o $(shell go env GOPATH)/bin/kubectl2go
-	@cd cmd/serve;GOOS_VAL=$(shell go env GOOS) GOARCH_VAL=$(shell go env GOARCH) go build -o $(shell go env GOPATH)/bin/kubectl2go_serve
+	@cd cmd/cli;GOOS_VAL=$(shell go env GOOS) GOARCH_VAL=$(shell go env GOARCH) go build -o $(shell go env GOPATH)/bin/kgoclientgen
+	@cd cmd/serve;GOOS_VAL=$(shell go env GOOS) GOARCH_VAL=$(shell go env GOARCH) go build -o $(shell go env GOPATH)/bin/kgoclientgen_serve
 	@echo "Build completed successfully"
 
 #system checks

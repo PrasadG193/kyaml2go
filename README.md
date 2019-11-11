@@ -1,8 +1,8 @@
-# kubectl2go
+# kgoclient-gen
 
 Go client code generator from Kubernetes resource specs yaml
 
-![https://github.com/PrasadG193/kubectl2go](./k2go.png)
+![https://github.com/PrasadG193/kgoclient-gen](./k2go.png)
 
 ## Installation
 
@@ -10,7 +10,7 @@ Go client code generator from Kubernetes resource specs yaml
 
 #### Step 1: Clone the repo
 ```bash
-$ git clone https://github.com/PrasadG193/kubectl2go.git
+$ git clone https://github.com/PrasadG193/kgoclient-gen.git
 ```
 
 #### Step 2: Build binary using make
@@ -41,7 +41,7 @@ spec:
 ```
 
 ```bash
-$ kubectl2go create -f testdata/service.yaml
+$ kgoclientgen create -f testdata/service.yaml
 package main
 
 import (
@@ -118,12 +118,12 @@ func main() {
 #### Show help
 
 ```bash
-$ kubectl2go --help
+$ kgoclientgen --help
 NAME:
-   kubectl2go - Generate go code to manage Kubernetes resources using go-client sdks
+   kgoclientgen - Generate go code to manage Kubernetes resources using go-client sdks
 
 USAGE:
-   kubectl2go [global options] command [command options] [arguments...]
+   kgoclientgen [global options] command [command options] [arguments...]
 
 VERSION:
    0.0.0
@@ -143,7 +143,7 @@ GLOBAL OPTIONS:
 #### Convert yaml spec to Go struct
 
 ```bash
-$ kubectl2go create/update/delete -f /path/to/resource_specs.yaml
+$ kgoclientgen create/update/delete -f /path/to/resource_specs.yaml
 ```
 
 ## Contributing

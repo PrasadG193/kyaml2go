@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/PrasadG193/kubectl2go/pkg/importer"
+	"github.com/PrasadG193/kgoclient-gen/pkg/importer"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
