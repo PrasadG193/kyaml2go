@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/PrasadG193/kubectl2go/pkg/kube"
-	"github.com/PrasadG193/kubectl2go/pkg/stack"
+	"github.com/PrasadG193/kgoclient-gen/pkg/kube"
+	"github.com/PrasadG193/kgoclient-gen/pkg/stack"
 )
 
 var COMMON_IMPORTS = []string{

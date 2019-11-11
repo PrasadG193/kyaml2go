@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/PrasadG193/kubectl2go/pkg/generator"
+	"github.com/PrasadG193/kgoclient-gen/pkg/generator"
 	"github.com/julienschmidt/httprouter"
 )
 
