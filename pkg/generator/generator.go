@@ -207,9 +207,9 @@ func (c *CodeGen) CleanupObject() {
 }
 
 func prettyStruct(obj string) string {
-	obj = strings.ReplaceAll(obj, ", ", ",\n")
-	obj = strings.ReplaceAll(obj, "{", " {\n")
-	obj = strings.ReplaceAll(obj, "}", ",\n}")
+	obj = strings.Replace(obj, ", ", ",\n", -1)
+	obj = strings.Replace(obj, "{", " {\n", -1)
+	obj = strings.Replace(obj, "}", ",\n}", -1)
 
 	// Run gofmt
 	goFormat, err := format.Source([]byte(obj))
