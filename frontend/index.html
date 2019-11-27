@@ -1,62 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Kubectl2Go</title>
-    <!--Bootstrap version 4.3.1-->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="./style.css"/>
-    <link rel="icon" type="image/gif/png" href="image/k2go.png" />
-    <script
-      src="https://code.jquery.com/jquery-3.4.1.min.js"
-      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-      crossorigin="anonymous"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  </head>
-  <body>
-    
-    <main role="main">
-      <!-- Main jumbotron for a primary marketing message or call to action -->
-      <div class="jumbotron d-flex">        
-          <img src="./image/k2go.png" style="height: 102px">
-          <div class="infoData">
-            <p class="k2Go">
-              Kubectl2Go
-            </p>
-            <p class="secondaryData">
-              Go client code generator for Kubernetes resource specs
-            </p>   
-        </div>      
-      </div>  
-      <div class="container">
-        <div class="modify">
-          <button type="button" class="btn btn-primary mr-3 ml-3" id="createGO">Create</button>
-          <button type="button" class="btn btn-secondary mr-3 ml-3" id="updateGO">Update</button>
-          <button type="button" class="btn btn-danger mr-3 ml-3" id="deleteGO"> Delete</button>
-        </div>
-        <!-- Example row of columns -->
-        <div class="position-relative row d-flex justify-content-between mt-4">        
-          <div class="position-relative form-group apply_space">
-            <label for="yaml">YAML</label>
-            <textarea class="form-control" id="yamlGenerator" rows="15"></textarea>
-            <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearYaml"/>
-          </div>
-          <div class="button_yaml">
-            <img src="./image/img_arrow.png" alt="yaml2go" class="coversion"/>           
-          </div>
-          <i class="glyphicon glyphicon-calendar"></i>
-          <div class="position-relative form-group apply_space">
-            <label for="goGenerator" class="go-float">GO</label>
-            <textarea class="form-control" id="goGenerator" rows="15"></textarea>
-            <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearGo"/>
-          </div>              
+  <title>kgoclient-gen: Kubernetes client-go code generator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <!--Bootstrap version 4.3.1-->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!--Code Mirror CSS-->
+    <link rel="stylesheet" type="text/css" href="plugin/codemirror/lib/codemirror.css">
+    <!--Font Awesome-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Main Style CSS-->
+    <link rel="stylesheet" href="./style.css" />
+    <!--Icon -->
+    <link rel="icon" type="image/gif/png"
+      href="https://raw.githubusercontent.com/PrasadG193/kgoclient-gen/master/k2go.png" />
+</head>
+
+<body>
+  <main role="main">
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron d-flex">
+      <img src="https://raw.githubusercontent.com/PrasadG193/kgoclient-gen/master/k2go.png" style="height: 102px">
+      <div class="infoData">
+        <div>
+          <p class="k2Go">
+            kgoclient-gen
+          </p>
+          <p class="secondaryData">
+            Kubernetes client-go code generator for Kubernetes resource YAMLs
+          </p>
         </div>  
-        <hr>  
-      </div> <!-- /container -->  
-    </main>
-    <script src="./index.js"></script>
+      </div>
+      <div id="view-source">
+          <a id="view-source-link" href="https://github.com/PrasadG193/kgoclient-gen"><i class="fa fa-github"></i> &nbsp;View Source</a>
+      </div>
+    </div>
+    <div id="error">
+      <span id="err-span">
+
+      </span>
+    </div>
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="position-relative row d-flex justify-content-between mt-4" style="height:65%;">
+        <div class="position-relative form-group apply_space" style="height:85%;">
+          <label for="yaml">YAML</label>
+          <textarea class="form-control codemirror-textarea" id="codegen"></textarea>
+          <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearYaml" />
+        </div>
+        <div class="button_yaml">
+          <button class="btn" id="convert" title="Convert to Go"><i class="fa fa-arrow-circle-right fa-2x"></i></button>
+        </div>
+        <i class="glyphicon glyphicon-calendar"></i>
+        <div class="position-relative form-group apply_space" style="height:85%;">
+          <label for="goGenerator">GO</label>
+          <textarea class="form-control codemirror-textarea" id="goGenerator" rows="15"></textarea>
+          <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearGo" />
+        </div>
+      </div>
+      <hr>
+      <p class="credits">
+      We would love your input. Please feel free to send PRs and open issues on the <a href="https://github.com/PrasadG193/yaml2go"> Github repo</a><br>
+      The Go Gopher is originally by <a href="http://reneefrench.blogspot.com">Renee French</a><br>
+      This artwork is borrowed from an awesome artwork collection by <a href="https://github.com/egonelbre/gophers">Egon Elbre</a><br>
+    </div> <!-- /container -->
+  </main>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="plugin/codemirror/lib/codemirror.js"></script>
+  <script src="plugin/codemirror/mode/go/go.js"></script>
+  <script src="plugin/codemirror/mode/yaml/yaml.js"></script>
+  <script src="./index.js"></script>
 </body>
+
 </html>

@@ -1,3 +1,7 @@
+html, body, main {
+    height:100%;
+}
+
 .apply_space{
     width: 45%;
 }
@@ -6,15 +10,9 @@
     width: 50px;
     height: 50px;     
     top: 50%;
-    border: 2px solid black;
     margin: auto;
     left: 0;
     right: 0;
-    background-repeat: no-repeat;
-    background-position: center;
-    -webkit-animation: example 10s infinite; /* Safari 4.0 - 8.0 */ 
-    animation: example 10s infinite;
-    border-radius: 50%
 }
 
 /* Safari 4.0 - 8.0 */
@@ -35,6 +33,19 @@
     75%  {border-color: #B10DC9;}
     100% {border-color: #001f3f;}
   }
+
+
+.btn {
+  background-color: steelBlue; /* Blue background */
+  border: none; /* Remove borders */
+  color: white; /* White text */
+  cursor: pointer; /* Mouse pointer on hover */
+}
+
+.container{
+    max-width: 80%;
+    height: 100%;
+}
 
 .coversion{
     width: 21px;
@@ -63,6 +74,7 @@
 
 .infoData{
   margin: 16px 42px;
+  width: 50%
 }
 
 .k2Go{
@@ -87,3 +99,45 @@ button:focus{
   cursor: pointer;
 }
 
+
+.CodeMirror {
+  border: 1px solid lavender !important;
+  height: 100%;
+}
+
+#error{
+  width: 50%;
+  margin: auto;
+  border: 1px solid azure;
+  display: none;
+  padding: 10px;
+  text-align: center;
+  color: red;
+}
+
+#view-source{
+  margin-top: 40px;
+  width: 60%;
+  text-align: right;
+  margin-right: 100px;
+}
+
+#view-source-link{
+  border: 1px solid steelblue;
+  padding: 10px;
+  color: steelblue;
+  
+}
+
+#view-source a{
+  text-decoration: none !important;
+}
+
+#view-source-link:hover{
+  background-color: white;
+}
+
+.credits {
+  color: gray;
+  text-align: center;
+}
