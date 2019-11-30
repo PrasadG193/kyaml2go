@@ -1,11 +1,12 @@
 //const URL = "http://localhost:8080/v1/convert"
-const URL = "https://us-central1-yaml2go.cloudfunctions.net/kgoclient-gen?method=create"
+let BASE_URL = "https://us-central1-yaml2go.cloudfunctions.net/kgoclient-gen?method="
 
 let go = document.getElementById("goGenerator")
 
 let editor = ""
 
-window.generatorCall=function (){
+window.generatorCall=function (action){
+  URL = formGooleFuncURL(action)
   let yamlData  = document.getElementById("codegen").value
   document.getElementById('codegen').style.border = "1px solid #ced4da"
   yamlData = editor.getValue()
@@ -22,6 +23,7 @@ window.generatorCall=function (){
     {
       document.getElementById('codegen').style.border = "1px solid red"
       if (jqXHR.status == 400) {
+        // empty out the second textarea
         displayError('Invalid yaml format')
       } else {
         displayError('Something went wrong! Please report this to me@prasadg.dev')
@@ -31,9 +33,21 @@ window.generatorCall=function (){
 
 }
 
+function formGooleFuncURL(action){
+  return BASE_URL+action
+}
+
 //Convert
+dropDown = document.getElementById("selectaction")
 document.getElementById("convert").addEventListener('click', ()=>{
-   generatorCall()
+  action = dropDown.value
+  if (action != "select"){
+    hideError()
+    generatorCall(action)
+  }
+  else{
+    displayError("Please select the method.")
+  }
 })
 
 //Clear YAML
@@ -69,4 +83,9 @@ $(document).ready(function(){
 function displayError(err){
   document.getElementById("err-span").innerHTML=err;
   document.getElementById("error").style.display="block"
+}
+
+function hideError(){
+  document.getElementById("err-span").innerHTML="";
+  document.getElementById("error").style.display="none"
 }
