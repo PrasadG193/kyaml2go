@@ -14,6 +14,7 @@ type KubeMethod string
 
 const (
 	MethodCreate = "create"
+	MethodGet    = "get"
 	MethodUpdate = "update"
 	MethodDelete = "delete"
 )
@@ -57,7 +58,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 
 	c.CleanupObject()
 
-	if c.Method != MethodDelete {
+	if c.Method != MethodDelete && c.Method != MethodGet {
 		i := importer.New(c.Kind, c.Group, c.Version, c.KubeObject)
 		c.Imports, c.KubeObject = i.FindImports()
 	}
@@ -126,9 +127,9 @@ func (c *CodeGen) AddKubeClient() {
 }
 
 func (c *CodeGen) AddKubeManage() {
-	// if Delete method
-	method := fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(c.Method.String()))
-	if c.Method == MethodDelete {
+	var method string
+	switch c.Method {
+	case MethodDelete:
 		// Add imports
 		for _, i := range importer.COMMON_IMPORTS {
 			c.Imports += fmt.Sprintf("\"%s\"\n", i)
@@ -137,6 +138,21 @@ func (c *CodeGen) AddKubeManage() {
 
 		param := fmt.Sprintf(`"%s", &metav1.DeleteOptions{}`, c.Name)
 		method = fmt.Sprintf("err = kubeclient.%s(%s)", strings.Title(c.Method.String()), param)
+
+	case MethodGet:
+		// Add imports
+		for _, i := range importer.COMMON_IMPORTS {
+			c.Imports += fmt.Sprintf("\"%s\"\n", i)
+		}
+		c.Imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
+
+		param := fmt.Sprintf(`"%s", metav1.GetOptions{}`, c.Name)
+		method = fmt.Sprintf("found, err := kubeclient.%s(%s)\n", strings.Title(c.Method.String()), param)
+		// Add log
+		method += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
+
+	default:
+		method = fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(c.Method.String()))
 	}
 
 	c.KubeManage = fmt.Sprintf(`fmt.Println("%s %s...")
@@ -151,7 +167,7 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 	kubeobject := fmt.Sprintf(`// Create resource object
 	object := %s`, c.KubeObject)
 
-	if c.Method == MethodDelete {
+	if c.Method == MethodDelete || c.Method == MethodGet {
 		kubeobject = ""
 	}
 
@@ -174,7 +190,7 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 	`, c.Imports, c.KubeClient, kubeobject, c.KubeManage)
 
 	// Add replica pointer function
-	if len(c.ReplicaCount) > 0 && c.Method != MethodDelete {
+	if len(c.ReplicaCount) > 0 && c.Method != MethodDelete && c.Method != MethodGet {
 		main += addReplicaFunc()
 	}
 
@@ -187,7 +203,7 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 }
 
 func (c *CodeGen) CleanupObject() {
-	if c.Method == MethodDelete {
+	if c.Method == MethodDelete || c.Method == MethodGet {
 		c.KubeObject = ""
 	}
 	kubeObject := strings.Split(c.KubeObject, "\n")

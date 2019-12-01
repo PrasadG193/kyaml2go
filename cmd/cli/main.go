@@ -46,6 +46,20 @@ func main() {
 			},
 		},
 		{
+			Name:  "get",
+			Usage: "Generate code to get a resource object",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:     "file, f",
+					Usage:    "K8s resource spec yaml file",
+					Required: true,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				return generate(c.String("file"), gen.MethodGet)
+			},
+		},
+		{
 			Name:  "delete",
 			Usage: "Generate code for deleting a resource",
 			Flags: []cli.Flag{
