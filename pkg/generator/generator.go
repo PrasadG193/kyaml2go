@@ -20,18 +20,18 @@ const (
 )
 
 type CodeGen struct {
-	Raw          []byte
-	Method       KubeMethod
-	Name         string
-	Namespace    string
-	Kind         string
-	Group        string
-	Version      string
-	ReplicaCount string
-	Imports      string
-	KubeClient   string
-	KubeObject   string
-	KubeManage   string
+	raw          []byte
+	method       KubeMethod
+	name         string
+	namespace    string
+	kind         string
+	group        string
+	version      string
+	replicaCount string
+	imports      string
+	kubeClient   string
+	kubeObject   string
+	kubeManage   string
 }
 
 func (m KubeMethod) String() string {
@@ -40,79 +40,79 @@ func (m KubeMethod) String() string {
 
 func New(raw []byte, method KubeMethod) CodeGen {
 	return CodeGen{
-		Raw:    raw,
-		Method: method,
+		raw:    raw,
+		method: method,
 	}
 }
 
 func (c *CodeGen) Generate() (code string, err error) {
 	// Convert yaml specs to runtime object
-	if err = c.AddKubeObject(); err != nil {
+	if err = c.addKubeObject(); err != nil {
 		return code, err
 	}
 
 	// Create kubeclient
-	c.AddKubeClient()
+	c.addKubeClient()
 	// Add methods to kubeclient
-	c.AddKubeManage()
+	c.addKubeManage()
 
-	c.CleanupObject()
+	c.cleanupObject()
 
-	if c.Method != MethodDelete && c.Method != MethodGet {
-		i := importer.New(c.Kind, c.Group, c.Version, c.KubeObject)
-		c.Imports, c.KubeObject = i.FindImports()
+	if c.method != MethodDelete && c.method != MethodGet {
+		i := importer.New(c.kind, c.group, c.version, c.kubeObject)
+		c.imports, c.kubeObject = i.FindImports()
 	}
 
-	return c.PrettyCode()
+	return c.prettyCode()
 }
 
-func (c *CodeGen) AddKubeObject() error {
+func (c *CodeGen) addKubeObject() error {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode(c.Raw, nil, nil)
+	obj, _, err := decode(c.raw, nil, nil)
 	if err != nil {
 		return fmt.Errorf("Error while decoding YAML object. Err was: %s", err)
 	}
 
 	// Find group and version
 	objMeta := obj.GetObjectKind().GroupVersionKind()
-	c.Kind = strings.Title(objMeta.Kind)
-	c.Group = strings.Title(objMeta.Group)
-	if len(c.Group) == 0 {
-		c.Group = "Core"
+	c.kind = strings.Title(objMeta.Kind)
+	c.group = strings.Title(objMeta.Group)
+	if len(c.group) == 0 {
+		c.group = "Core"
 	}
-	c.Version = strings.Title(objMeta.Version)
+	c.version = strings.Title(objMeta.Version)
 
 	// Add replica pointer function
 	var re = regexp.MustCompile(`replicas:\s?([0-9]+)`)
-	matched := re.FindAllStringSubmatch(string(c.Raw), -1)
+	matched := re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) == 1 && len(matched[0]) == 2 {
-		c.ReplicaCount = matched[0][1]
+		c.replicaCount = matched[0][1]
 	}
 
 	// Add object name
 	re = regexp.MustCompile(`name:\s?"?([-a-zA-Z]+)`)
-	matched = re.FindAllStringSubmatch(string(c.Raw), -1)
+	matched = re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) >= 1 && len(matched[0]) == 2 {
-		c.Name = matched[0][1]
+		c.name = matched[0][1]
 	}
 
-	// Add Namespace
-	c.Namespace = "default"
+	// Add namespace
+	c.namespace = "default"
 	re = regexp.MustCompile(`namespace:\s?"?([-a-zA-Z]+)`)
-	matched = re.FindAllStringSubmatch(string(c.Raw), -1)
+	matched = re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) >= 1 && len(matched[0]) == 2 {
-		c.Namespace = matched[0][1]
+		c.namespace = matched[0][1]
 	}
 
 	// Pretty struct
-	c.KubeObject = prettyStruct(fmt.Sprintf("%#v", obj))
-	//fmt.Printf("%s\n\n", c.KubeObject)
+	c.kubeObject = prettyStruct(fmt.Sprintf("%#v", obj))
+	//fmt.Printf("%s\n\n", c.kubeObject)
 	return nil
 }
 
-func (c *CodeGen) AddKubeClient() {
+func (c *CodeGen) addKubeClient() {
 	// TODO: dynamic namespace
-	c.KubeClient = fmt.Sprintf(`var kubeconfig = os.Getenv("KUBECONFIG")
+	c.kubeClient = fmt.Sprintf(`var kubeconfig = os.Getenv("KUBECONFIG")
 
         config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
         if err != nil {
@@ -123,51 +123,51 @@ func (c *CodeGen) AddKubeClient() {
                 panic(err)
         }
         kubeclient := clientset.%s%s().%ss("%s")
-	`, c.Group, c.Version, c.Kind, c.Namespace)
+	`, c.group, c.version, c.kind, c.namespace)
 }
 
-func (c *CodeGen) AddKubeManage() {
+func (c *CodeGen) addKubeManage() {
 	var method string
-	switch c.Method {
+	switch c.method {
 	case MethodDelete:
 		// Add imports
 		for _, i := range importer.COMMON_IMPORTS {
-			c.Imports += fmt.Sprintf("\"%s\"\n", i)
+			c.imports += fmt.Sprintf("\"%s\"\n", i)
 		}
-		c.Imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
+		c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
 
-		param := fmt.Sprintf(`"%s", &metav1.DeleteOptions{}`, c.Name)
-		method = fmt.Sprintf("err = kubeclient.%s(%s)", strings.Title(c.Method.String()), param)
+		param := fmt.Sprintf(`"%s", &metav1.DeleteOptions{}`, c.name)
+		method = fmt.Sprintf("err = kubeclient.%s(%s)", strings.Title(c.method.String()), param)
 
 	case MethodGet:
 		// Add imports
 		for _, i := range importer.COMMON_IMPORTS {
-			c.Imports += fmt.Sprintf("\"%s\"\n", i)
+			c.imports += fmt.Sprintf("\"%s\"\n", i)
 		}
-		c.Imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
+		c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
 
-		param := fmt.Sprintf(`"%s", metav1.GetOptions{}`, c.Name)
-		method = fmt.Sprintf("found, err := kubeclient.%s(%s)\n", strings.Title(c.Method.String()), param)
+		param := fmt.Sprintf(`"%s", metav1.GetOptions{}`, c.name)
+		method = fmt.Sprintf("found, err := kubeclient.%s(%s)\n", strings.Title(c.method.String()), param)
 		// Add log
 		method += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
 
 	default:
-		method = fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(c.Method.String()))
+		method = fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(c.method.String()))
 	}
 
-	c.KubeManage = fmt.Sprintf(`fmt.Println("%s %s...")
+	c.kubeManage = fmt.Sprintf(`fmt.Println("%s %s...")
 	%s
         if err != nil {
                 panic(err)
         }
-	`, strings.Title(c.Method.String()), c.Kind, method)
+	`, strings.Title(c.method.String()), c.kind, method)
 }
 
-func (c *CodeGen) PrettyCode() (code string, err error) {
+func (c *CodeGen) prettyCode() (code string, err error) {
 	kubeobject := fmt.Sprintf(`// Create resource object
-	object := %s`, c.KubeObject)
+	object := %s`, c.kubeObject)
 
-	if c.Method == MethodDelete || c.Method == MethodGet {
+	if c.method == MethodDelete || c.method == MethodGet {
 		kubeobject = ""
 	}
 
@@ -187,10 +187,10 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 	// Manage resource
 	%s
 	}
-	`, c.Imports, c.KubeClient, kubeobject, c.KubeManage)
+	`, c.imports, c.kubeClient, kubeobject, c.kubeManage)
 
 	// Add replica pointer function
-	if len(c.ReplicaCount) > 0 && c.Method != MethodDelete && c.Method != MethodGet {
+	if len(c.replicaCount) > 0 && c.method != MethodDelete && c.method != MethodGet {
 		main += addReplicaFunc()
 	}
 
@@ -202,22 +202,22 @@ func (c *CodeGen) PrettyCode() (code string, err error) {
 	return string(goFormat), nil
 }
 
-func (c *CodeGen) CleanupObject() {
-	if c.Method == MethodDelete || c.Method == MethodGet {
-		c.KubeObject = ""
+func (c *CodeGen) cleanupObject() {
+	if c.method == MethodDelete || c.method == MethodGet {
+		c.kubeObject = ""
 	}
-	kubeObject := strings.Split(c.KubeObject, "\n")
-	kubeObject = RemoveSubObject(kubeObject, "CreationTimestamp")
-	kubeObject = RemoveSubObject(kubeObject, "Status:")
-	kubeObject = RemoveNilFields(kubeObject)
-	kubeObject = c.MatchLabelsStruct(kubeObject)
-	if len(c.ReplicaCount) > 0 {
-		kubeObject = AddReplicaPointer(c.ReplicaCount, kubeObject)
+	kubeObject := strings.Split(c.kubeObject, "\n")
+	kubeObject = removeSubObject(kubeObject, "CreationTimestamp")
+	kubeObject = removeSubObject(kubeObject, "Status:")
+	kubeObject = removeNilFields(kubeObject)
+	kubeObject = c.matchLabelsStruct(kubeObject)
+	if len(c.replicaCount) > 0 {
+		kubeObject = addReplicaPointer(c.replicaCount, kubeObject)
 	}
-	c.KubeObject = ""
+	c.kubeObject = ""
 	for _, l := range kubeObject {
 		if len(l) != 0 {
-			c.KubeObject += l + "\n"
+			c.kubeObject += l + "\n"
 		}
 	}
 }
@@ -239,7 +239,7 @@ func addReplicaFunc() string {
 	return fmt.Sprintf(`func int32Ptr(i int32) *int32 { return &i }`)
 }
 
-func RemoveNilFields(kubeobject []string) []string {
+func removeNilFields(kubeobject []string) []string {
 	nilFields := []string{"nil", "\"\","}
 	for i, line := range kubeobject {
 		for _, n := range nilFields {
@@ -251,7 +251,7 @@ func RemoveNilFields(kubeobject []string) []string {
 	return kubeobject
 }
 
-func RemoveSubObject(object []string, objectName string) []string {
+func removeSubObject(object []string, objectName string) []string {
 	depth := 0
 	for i, line := range object {
 		if strings.Contains(line, objectName) {
@@ -274,7 +274,7 @@ func RemoveSubObject(object []string, objectName string) []string {
 	return object
 }
 
-func AddReplicaPointer(replicaCount string, kubeobject []string) []string {
+func addReplicaPointer(replicaCount string, kubeobject []string) []string {
 	for i, _ := range kubeobject {
 		if strings.Contains(kubeobject[i], "Replicas") {
 			kubeobject[i] = fmt.Sprintf("Replicas: int32Ptr(%s),", replicaCount)
@@ -283,9 +283,9 @@ func AddReplicaPointer(replicaCount string, kubeobject []string) []string {
 	return kubeobject
 }
 
-func (c CodeGen) MatchLabelsStruct(kubeobject []string) []string {
+func (c CodeGen) matchLabelsStruct(kubeobject []string) []string {
 	var re = regexp.MustCompile(`(?ms)matchLabels:(?:[\s]*([a-zA-Z]+):\s?([a-zA-Z]+))*`)
-	matched := re.FindAllStringSubmatch(string(c.Raw), -1)
+	matched := re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) != 1 || len(matched[0]) != 3 {
 		return kubeobject
 	}
