@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/PrasadG193/kgoclient-gen/pkg/importer"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -20,18 +22,19 @@ const (
 )
 
 type CodeGen struct {
-	raw          []byte
-	method       KubeMethod
-	name         string
-	namespace    string
-	kind         string
-	group        string
-	version      string
-	replicaCount string
-	imports      string
-	kubeClient   string
-	kubeObject   string
-	kubeManage   string
+	raw           []byte
+	method        KubeMethod
+	name          string
+	namespace     string
+	kind          string
+	group         string
+	version       string
+	replicaCount  string
+	imports       string
+	kubeClient    string
+	runtimeObject runtime.Object
+	kubeObject    string
+	kubeManage    string
 }
 
 func (m KubeMethod) String() string {
@@ -55,8 +58,10 @@ func (c *CodeGen) Generate() (code string, err error) {
 	c.addKubeClient()
 	// Add methods to kubeclient
 	c.addKubeManage()
-
+	// Remove unnecessary fields
 	c.cleanupObject()
+	// Convert secret binary data to string
+	c.secretStringData()
 
 	if c.method != MethodDelete && c.method != MethodGet {
 		i := importer.New(c.kind, c.group, c.version, c.kubeObject)
@@ -67,14 +72,15 @@ func (c *CodeGen) Generate() (code string, err error) {
 }
 
 func (c *CodeGen) addKubeObject() error {
+	var err error
 	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode(c.raw, nil, nil)
+	c.runtimeObject, _, err = decode(c.raw, nil, nil)
 	if err != nil {
 		return fmt.Errorf("Error while decoding YAML object. Err was: %s", err)
 	}
 
 	// Find group and version
-	objMeta := obj.GetObjectKind().GroupVersionKind()
+	objMeta := c.runtimeObject.GetObjectKind().GroupVersionKind()
 	c.kind = strings.Title(objMeta.Kind)
 	c.group = strings.Title(objMeta.Group)
 	if len(c.group) == 0 {
@@ -104,8 +110,11 @@ func (c *CodeGen) addKubeObject() error {
 		c.namespace = matched[0][1]
 	}
 
+	// Replace Data with StringData for secret object types
+	c.secretStringData()
+
 	// Pretty struct
-	c.kubeObject = prettyStruct(fmt.Sprintf("%#v", obj))
+	c.kubeObject = prettyStruct(fmt.Sprintf("%#v", c.runtimeObject))
 	//fmt.Printf("%s\n\n", c.kubeObject)
 	return nil
 }
@@ -209,17 +218,39 @@ func (c *CodeGen) cleanupObject() {
 	kubeObject := strings.Split(c.kubeObject, "\n")
 	kubeObject = removeSubObject(kubeObject, "CreationTimestamp")
 	kubeObject = removeSubObject(kubeObject, "Status:")
+	kubeObject = removeSubObject(kubeObject, "Status:")
 	kubeObject = removeNilFields(kubeObject)
 	kubeObject = c.matchLabelsStruct(kubeObject)
 	if len(c.replicaCount) > 0 {
 		kubeObject = addReplicaPointer(c.replicaCount, kubeObject)
 	}
+	// Remove binary secret data
+	if c.kind == "Secret" {
+		kubeObject = removeSubObject(kubeObject, "Data: map[string][]uint8")
+	}
+
 	c.kubeObject = ""
 	for _, l := range kubeObject {
 		if len(l) != 0 {
 			c.kubeObject += l + "\n"
 		}
 	}
+}
+
+func (c *CodeGen) secretStringData() {
+	if c.kind != "Secret" {
+		return
+	}
+
+	secretObject, ok := c.runtimeObject.(*v1.Secret)
+	if !ok {
+		return
+	}
+	secretObject.StringData = make(map[string]string)
+	for key, val := range secretObject.Data {
+		secretObject.StringData[key] = string(val)
+	}
+	c.runtimeObject = secretObject
 }
 
 func prettyStruct(obj string) string {
@@ -251,6 +282,7 @@ func removeNilFields(kubeobject []string) []string {
 	return kubeobject
 }
 
+// remove struct field and all sub fields
 func removeSubObject(object []string, objectName string) []string {
 	depth := 0
 	for i, line := range object {
