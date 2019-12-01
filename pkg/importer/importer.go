@@ -13,8 +13,10 @@ import (
 var COMMON_IMPORTS = []string{
 	"os",
 	"fmt",
+	"path/filepath",
 	"k8s.io/client-go/kubernetes",
 	"k8s.io/client-go/tools/clientcmd",
+	"k8s.io/client-go/util/homedir",
 }
 
 const PACKAGE_FORMAT = `(?m)([A-Za-z0-9]*)\.([A-Za-z]+)`

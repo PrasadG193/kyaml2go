@@ -121,7 +121,11 @@ func (c *CodeGen) addKubeObject() error {
 
 func (c *CodeGen) addKubeClient() {
 	// TODO: dynamic namespace
-	c.kubeClient = fmt.Sprintf(`var kubeconfig = os.Getenv("KUBECONFIG")
+	c.kubeClient = fmt.Sprintf(`var kubeconfig string
+	kubeconfig, ok := os.LookupEnv("KUBECONFIG")
+	if !ok {
+		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
+	}
 
         config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
         if err != nil {
