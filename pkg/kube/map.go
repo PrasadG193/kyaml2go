@@ -23,7 +23,6 @@ var ApiPkgMap = map[string]string{
 	"certificates.k8s.io":          "k8s.io/api/certificates",
 	"coordination.k8s.io":          "k8s.io/api/coordination",
 	"events.k8s.io":                "k8s.io/api/events",
-	"extensions":                   "k8s.io/api/extensions",
 	"networking.k8s.io":            "k8s.io/api/networking",
 	"node.k8s.io":                  "k8s.io/api/node",
 	"policy":                       "k8s.io/api/policy",
@@ -33,6 +32,7 @@ var ApiPkgMap = map[string]string{
 	"corev1":                       "k8s.io/api/core",
 	"metav1":                       "k8s.io/apimachinery/pkg/apis/meta",
 	"intstr":                       "k8s.io/apimachinery/pkg/util/intstr",
+	"resource":                     "k8s.io/apimachinery/pkg/api/resource",
 }
 
 var KindApiMap = map[string]string{

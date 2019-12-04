@@ -19,7 +19,7 @@ var COMMON_IMPORTS = []string{
 	"k8s.io/client-go/util/homedir",
 }
 
-const PACKAGE_FORMAT = `(?m)([A-Za-z0-9]*)\.([A-Za-z]+)`
+const PACKAGE_FORMAT = `(?m)([A-Za-z0-9]*)\.([A-Za-z]+)[(|{]`
 
 type ImportManager struct {
 	Kind    string
@@ -85,7 +85,7 @@ func (i *ImportManager) RenamePackages() {
 		// Line has external package
 		var re = regexp.MustCompile(PACKAGE_FORMAT)
 		matched := re.FindAllStringSubmatch(line, -1)
-		if len(matched) != 1 || len(matched[0]) != 3 {
+		if len(matched) < 1 || len(matched[0]) < 3 {
 			i.Object += line + "\n"
 			continue
 		}

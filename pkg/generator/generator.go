@@ -6,10 +6,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/PrasadG193/kgoclient-gen/pkg/importer"
+	"github.com/gdexlab/go-render/render"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/PrasadG193/kgoclient-gen/pkg/importer"
 )
 
 type KubeMethod string
@@ -22,19 +24,20 @@ const (
 )
 
 type CodeGen struct {
-	raw           []byte
-	method        KubeMethod
-	name          string
-	namespace     string
-	kind          string
-	group         string
-	version       string
-	replicaCount  string
-	imports       string
-	kubeClient    string
-	runtimeObject runtime.Object
-	kubeObject    string
-	kubeManage    string
+	raw             []byte
+	method          KubeMethod
+	name            string
+	namespace       string
+	kind            string
+	group           string
+	version         string
+	replicaCount    string
+	termGracePeriod string
+	imports         string
+	kubeClient      string
+	runtimeObject   runtime.Object
+	kubeObject      string
+	kubeManage      string
 }
 
 func (m KubeMethod) String() string {
@@ -60,7 +63,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 	c.addKubeManage()
 	// Remove unnecessary fields
 	c.cleanupObject()
-	// Convert secret binary data to string
+	// Replace Data with StringData for secret object types
 	c.secretStringData()
 
 	if c.method != MethodDelete && c.method != MethodGet {
@@ -88,11 +91,18 @@ func (c *CodeGen) addKubeObject() error {
 	}
 	c.version = strings.Title(objMeta.Version)
 
-	// Add replica pointer function
+	// Find replica count
 	var re = regexp.MustCompile(`replicas:\s?([0-9]+)`)
 	matched := re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) == 1 && len(matched[0]) == 2 {
 		c.replicaCount = matched[0][1]
+	}
+
+	// Add terminationGracePeriodSeconds
+	re = regexp.MustCompile(`terminationGracePeriodSeconds:\s?([0-9]+)`)
+	matched = re.FindAllStringSubmatch(string(c.raw), -1)
+	if len(matched) == 1 && len(matched[0]) == 2 {
+		c.termGracePeriod = matched[0][1]
 	}
 
 	// Add object name
@@ -110,11 +120,8 @@ func (c *CodeGen) addKubeObject() error {
 		c.namespace = matched[0][1]
 	}
 
-	// Replace Data with StringData for secret object types
-	c.secretStringData()
-
 	// Pretty struct
-	c.kubeObject = prettyStruct(fmt.Sprintf("%#v", c.runtimeObject))
+	c.kubeObject = prettyStruct(render.AsCode(c.runtimeObject))
 	//fmt.Printf("%s\n\n", c.kubeObject)
 	return nil
 }
@@ -203,8 +210,13 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 	`, c.imports, c.kubeClient, kubeobject, c.kubeManage)
 
 	// Add replica pointer function
-	if len(c.replicaCount) > 0 && c.method != MethodDelete && c.method != MethodGet {
-		main += addReplicaFunc()
+	if c.method != MethodDelete && c.method != MethodGet {
+		if len(c.replicaCount) != 0 {
+			main += addIntptrFunc("32")
+		}
+		if len(c.termGracePeriod) != 0 {
+			main += addIntptrFunc("64")
+		}
 	}
 
 	// Run gofmt
@@ -220,17 +232,21 @@ func (c *CodeGen) cleanupObject() {
 		c.kubeObject = ""
 	}
 	kubeObject := strings.Split(c.kubeObject, "\n")
-	kubeObject = removeSubObject(kubeObject, "CreationTimestamp")
-	kubeObject = removeSubObject(kubeObject, "Status:")
-	kubeObject = removeSubObject(kubeObject, "Status:")
+	kubeObject = replaceSubObject(kubeObject, "CreationTimestamp", "", -1)
+	kubeObject = replaceSubObject(kubeObject, "Status", "", -1)
 	kubeObject = removeNilFields(kubeObject)
-	kubeObject = c.matchLabelsStruct(kubeObject)
+	kubeObject = updateResources(kubeObject)
 	if len(c.replicaCount) > 0 {
-		kubeObject = addReplicaPointer(c.replicaCount, kubeObject)
+		kubeObject = replaceSubObject(kubeObject, "Replicas:", fmt.Sprintf("Replicas: int32Ptr(%s),", c.replicaCount), -1)
 	}
+	if len(c.termGracePeriod) > 0 {
+		kubeObject = replaceSubObject(kubeObject, "TerminationGracePeriodSeconds:", fmt.Sprintf("TerminationGracePeriodSeconds: int64Ptr(%s),", c.termGracePeriod), -1)
+	}
+
 	// Remove binary secret data
 	if c.kind == "Secret" {
-		kubeObject = removeSubObject(kubeObject, "Data: map[string][]uint8")
+		kubeObject = replaceSubObject(kubeObject, "CreationTimestamp", "", -1)
+		kubeObject = replaceSubObject(kubeObject, "Data: map[string][]uint8", "", -1)
 	}
 
 	c.kubeObject = ""
@@ -270,12 +286,12 @@ func prettyStruct(obj string) string {
 	return string(goFormat)
 }
 
-func addReplicaFunc() string {
-	return fmt.Sprintf(`func int32Ptr(i int32) *int32 { return &i }`)
+func addIntptrFunc(bytes string) string {
+	return fmt.Sprintf(`func int%sPtr(i int%s) *int%s { return &i }`, bytes, bytes, bytes)
 }
 
 func removeNilFields(kubeobject []string) []string {
-	nilFields := []string{"nil", "\"\","}
+	nilFields := []string{"nil", "\"\"", "false"}
 	for i, line := range kubeobject {
 		for _, n := range nilFields {
 			if strings.Contains(line, n) {
@@ -286,25 +302,71 @@ func removeNilFields(kubeobject []string) []string {
 	return kubeobject
 }
 
-// remove struct field and all sub fields
-func removeSubObject(object []string, objectName string) []string {
+// replace struct field and all sub fields
+// n stands for no. of occurances you want to replace
+// n < 0 = all occurances
+func replaceSubObject(object []string, objectName, newObject string, n int) []string {
 	depth := 0
+
 	for i, line := range object {
-		if strings.Contains(line, objectName) {
-			object[i] = ""
-			depth = 1
+		if n == 0 {
+			break
+		}
+		if !strings.Contains(line, objectName) && depth == 0 {
 			continue
 		}
-		if depth > 0 {
+		if strings.Contains(line, "{") {
+			depth += 1
+		}
+		if strings.Contains(line, "}") {
+			depth -= 1
+		}
+		if strings.Contains(line, objectName) {
+			object[i] = newObject
+		} else {
 			object[i] = ""
-			if strings.Contains(line, "{") {
-				depth += 1
-				continue
-			}
-			if strings.Contains(line, "}") {
-				depth -= 1
-				continue
-			}
+		}
+		// Replace n occurances
+		if depth == 0 {
+			n--
+		}
+	}
+	return object
+}
+
+func parseResourceValue(object []string) (string, string) {
+	var value, format string
+	for _, line := range object {
+		// parse value
+		re := regexp.MustCompile(`(?m)value:\s([0-9]*)`)
+		matched := re.FindAllStringSubmatch(line, -1)
+		if len(matched) >= 1 && len(matched[0]) == 2 {
+			value = matched[0][1]
+		}
+
+		// Parse unit
+		re = regexp.MustCompile(`(?m)resource\.Format\("([a-z-A-Z]*)"\)`)
+		matched = re.FindAllStringSubmatch(line, -1)
+		if len(matched) >= 1 && len(matched[0]) == 2 {
+			format = matched[0][1]
+			break
+		}
+	}
+	return value, format
+}
+
+func updateResources(object []string) []string {
+	cpu := "\"cpu\": resource.Quantity"
+	mem := "\"memory\": resource.Quantity"
+	for i, line := range object {
+		if strings.Contains(line, cpu) {
+			value, format := parseResourceValue(object[i+1:])
+			replaceSubObject(object[i:], cpu, fmt.Sprintf("\"cpu\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
+		}
+
+		if strings.Contains(line, mem) {
+			value, format := parseResourceValue(object[i+1:])
+			replaceSubObject(object[i:], mem, fmt.Sprintf("\"memory\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
 		}
 	}
 	return object
@@ -314,30 +376,6 @@ func addReplicaPointer(replicaCount string, kubeobject []string) []string {
 	for i, _ := range kubeobject {
 		if strings.Contains(kubeobject[i], "Replicas") {
 			kubeobject[i] = fmt.Sprintf("Replicas: int32Ptr(%s),", replicaCount)
-		}
-	}
-	return kubeobject
-}
-
-func (c CodeGen) matchLabelsStruct(kubeobject []string) []string {
-	var re = regexp.MustCompile(`(?ms)matchLabels:(?:[\s]*([a-zA-Z]+):\s?([a-zA-Z]+))*`)
-	matched := re.FindAllStringSubmatch(string(c.raw), -1)
-	if len(matched) != 1 || len(matched[0]) != 3 {
-		return kubeobject
-	}
-
-	labels := ""
-	for i, _ := range matched {
-		labels += fmt.Sprintf("\"%s\": \"%s\",\n", matched[i][1], matched[i][2])
-	}
-
-	for i, _ := range kubeobject {
-		if strings.Contains(kubeobject[i], "Selector:") {
-			kubeobject[i] = fmt.Sprintf(`Selector: &v1.LabelSelector{
-                                MatchLabels: map[string]string{
-                                        %s
-                                },
-                        },`, labels)
 		}
 	}
 	return kubeobject

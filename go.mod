@@ -3,8 +3,10 @@ module github.com/PrasadG193/kgoclient-gen
 go 1.13
 
 require (
+	github.com/gdexlab/go-render v1.0.1
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/julienschmidt/httprouter v1.2.0
+	github.com/luci/go-render v0.0.0-20160219211803-9a04cc21af0f
 	github.com/rs/cors v1.7.0
 	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
