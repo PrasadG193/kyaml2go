@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/PrasadG193/kgoclient-gen/pkg/importer"
+	"github.com/PrasadG193/kgoclient-gen/pkg/kube"
 )
 
 type KubeMethod string
@@ -142,8 +143,13 @@ func (c *CodeGen) addKubeClient() {
         if err != nil {
                 panic(err)
         }
-        kubeclient := clientset.%s%s().%ss("%s")
-	`, c.group, c.version, c.kind, c.namespace)
+	`)
+
+	method := fmt.Sprintf("kubeclient := clientset.%s%s().%ss()\n", c.group, c.version, c.kind)
+	if _, ok := kube.KindNamespaced[c.kind]; ok {
+		method = fmt.Sprintf("kubeclient := clientset.%s%s().%ss(\"%s\")", c.group, c.version, c.kind, c.namespace)
+	}
+	c.kubeClient += method
 }
 
 func (c *CodeGen) addKubeManage() {
@@ -358,6 +364,7 @@ func parseResourceValue(object []string) (string, string) {
 func updateResources(object []string) []string {
 	cpu := "\"cpu\": resource.Quantity"
 	mem := "\"memory\": resource.Quantity"
+	storage := "\"storage\": resource.Quantity"
 	for i, line := range object {
 		if strings.Contains(line, cpu) {
 			value, format := parseResourceValue(object[i+1:])
@@ -367,6 +374,11 @@ func updateResources(object []string) []string {
 		if strings.Contains(line, mem) {
 			value, format := parseResourceValue(object[i+1:])
 			replaceSubObject(object[i:], mem, fmt.Sprintf("\"memory\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
+		}
+
+		if strings.Contains(line, storage) {
+			value, format := parseResourceValue(object[i+1:])
+			replaceSubObject(object[i:], storage, fmt.Sprintf("\"storage\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
 		}
 	}
 	return object

@@ -97,6 +97,37 @@ var KindApiMap = map[string]string{
 	"LabelSelector":         "metav1",
 }
 
+var KindNamespaced = map[string]bool{
+	"Binding":                  true,
+	"ConfigMap":                true,
+	"Endpoints":                true,
+	"Event":                    true,
+	"LimitRange":               true,
+	"PersistentVolumeClaim":    true,
+	"Pod":                      true,
+	"PodTemplate":              true,
+	"ReplicationController":    true,
+	"ResourceQuota":            true,
+	"Secret":                   true,
+	"ServiceAccount":           true,
+	"Service":                  true,
+	"ControllerRevision":       true,
+	"DaemonSet":                true,
+	"Deployment":               true,
+	"ReplicaSet":               true,
+	"StatefulSet":              true,
+	"LocalSubjectAccessReview": true,
+	"HorizontalPodAutoscaler":  true,
+	"CronJob":                  true,
+	"Job":                      true,
+	"Lease":                    true,
+	"Ingress":                  true,
+	"NetworkPolicy":            true,
+	"PodDisruptionBudget":      true,
+	"RoleBinding":              true,
+	"Role":                     true,
+}
+
 func GenerateImportAs(pkg, version string) string {
 	p := strings.Split(pkg, "/")
 	return p[len(p)-1] + version
