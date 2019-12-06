@@ -86,16 +86,26 @@ html, body, main {
 }
 
 .k2Go{
-  font-size: 22px;  
   color: steelblue;
   font-family: monospace;
-  margin-bottom: 4px;
+  display: inline;
 }
 
+#alpha{
+  border: 1px solid steelblue;
+  border-radius: 3px;
+  color: steelblue;
+  margin-bottom: 2px;
+  margin-left: -10px;
+  font-size: 12px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
 .secondaryData{
   font-size: 15px;
   color: steelblue;
   font-family: monospace;
+  margin-top: 4px;
 }
 
 button:focus{
