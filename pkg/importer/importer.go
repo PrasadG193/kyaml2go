@@ -19,7 +19,7 @@ var COMMON_IMPORTS = []string{
 	"k8s.io/client-go/util/homedir",
 }
 
-const PACKAGE_FORMAT = `(?m)([A-Za-z0-9]*)\.([A-Za-z]+)[(|{]`
+const PACKAGE_FORMAT = `(?m)[*|&|\]|\s]([A-Za-z0-9]*)\.([A-Za-z]+)`
 
 type ImportManager struct {
 	Kind    string

@@ -92,6 +92,8 @@ var KindApiMap = map[string]string{
 	"Secret":                "corev1",
 	"ServiceAccount":        "corev1",
 	"Service":               "corev1",
+	"PersistentVolumeMode":  "corev1",
+	"ResourceRequirements":  "corev1",
 	"TypeMeta":              "metav1",
 	"ObjectMeta":            "metav1",
 	"LabelSelector":         "metav1",

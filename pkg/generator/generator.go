@@ -39,6 +39,7 @@ type CodeGen struct {
 	runtimeObject   runtime.Object
 	kubeObject      string
 	kubeManage      string
+	extraFuncs      string
 }
 
 func (m KubeMethod) String() string {
@@ -70,6 +71,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 	if c.method != MethodDelete && c.method != MethodGet {
 		i := importer.New(c.kind, c.group, c.version, c.kubeObject)
 		c.imports, c.kubeObject = i.FindImports()
+		c.addPtrMethods()
 	}
 
 	return c.prettyCode()
@@ -215,15 +217,7 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 	}
 	`, c.imports, c.kubeClient, kubeobject, c.kubeManage)
 
-	// Add replica pointer function
-	if c.method != MethodDelete && c.method != MethodGet {
-		if len(c.replicaCount) != 0 {
-			main += addIntptrFunc("32")
-		}
-		if len(c.termGracePeriod) != 0 {
-			main += addIntptrFunc("64")
-		}
-	}
+	main += c.extraFuncs
 
 	// Run gofmt
 	goFormat, err := format.Source([]byte(main))
@@ -359,6 +353,36 @@ func parseResourceValue(object []string) (string, string) {
 		}
 	}
 	return value, format
+}
+
+func (c *CodeGen) addPtrMethods() {
+	object := strings.Split(c.kubeObject, "\n")
+	for i, line := range object {
+		var typeName, funcName, param string
+		re := regexp.MustCompile(`(?m)\(&([a-zA-Z0-1]*.([a-zA-Z]*))\)\(([a-zA-Z0-9"]*)\)`)
+		matched := re.FindAllStringSubmatch(line, -1)
+		if len(matched) == 1 && len(matched[0]) == 4 {
+			typeName = matched[0][1]
+			funcName = "ptr" + matched[0][2]
+			if len(matched[0][2]) == 0 {
+				funcName = "ptr" + matched[0][1]
+			}
+			param = matched[0][3]
+			object[i] = strings.Replace(object[i], matched[0][0], fmt.Sprintf("%s(%s)", funcName, param), 1)
+			c.extraFuncs += fmt.Sprintf(`
+			func %s(p %s) *%s { 
+				return &p 
+			}
+			`, funcName, typeName, typeName)
+			// func int%sPtr(i int%s) *int%s { return &i }
+		}
+	}
+	c.kubeObject = ""
+	for _, l := range object {
+		if len(l) != 0 {
+			c.kubeObject += l + "\n"
+		}
+	}
 }
 
 func updateResources(object []string) []string {
