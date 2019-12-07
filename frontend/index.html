@@ -56,7 +56,6 @@
         <div class="button_yaml" id="dd_wrapper">
           
           <select id="selectaction">
-            <option value="select">Method</option>
             <option value="create">Create</option>
             <option value="update">Update</option>
             <option value="delete">Delete</option>
@@ -69,7 +68,11 @@
         </div>
         <i class="glyphicon glyphicon-calendar"></i>
         <div class="position-relative form-group apply_space" style="height:85%;">
-          <label for="goGenerator">GO</label>
+            <div>
+              <label for="goGenerator">GO</label> 
+              <span id="codecopied">code copied</span>
+              <i class="fa fa-copy flr" id="copybutton" title="Copy Code""></i>
+            </div>
           <textarea class="form-control codemirror-textarea" id="goGenerator" rows="15"></textarea>
           <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearGo" />
         </div>

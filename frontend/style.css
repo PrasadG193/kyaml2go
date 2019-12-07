@@ -74,6 +74,17 @@ html, body, main {
   float: right;
 }
 
+.flr{
+  float: right;
+  cursor: pointer;
+  -webkit-transition: all ease  .1s;
+}
+.fa-copy:hover{
+  transform: scale(1.3);
+}
+#codecopied{
+  display: none;
+}
 .jumbotron {
   padding: 10px 0 !important;
   background-color: azure !important;
