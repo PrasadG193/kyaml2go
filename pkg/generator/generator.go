@@ -147,9 +147,9 @@ func (c *CodeGen) addKubeClient() {
         }
 	`)
 
-	method := fmt.Sprintf("kubeclient := clientset.%s%s().%ss()\n", c.group, c.version, c.kind)
+	method := fmt.Sprintf("kubeclient := clientset.%s%s().%ss()", strings.Split(c.group, ".")[0], c.version, c.kind)
 	if _, ok := kube.KindNamespaced[c.kind]; ok {
-		method = fmt.Sprintf("kubeclient := clientset.%s%s().%ss(\"%s\")", c.group, c.version, c.kind, c.namespace)
+		method = fmt.Sprintf("kubeclient := clientset.%s%s().%ss(\"%s\")", strings.Split(c.group, ".")[0], c.version, c.kind, c.namespace)
 	}
 	c.kubeClient += method
 }

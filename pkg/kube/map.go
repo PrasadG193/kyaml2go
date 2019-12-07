@@ -26,7 +26,7 @@ var ApiPkgMap = map[string]string{
 	"networking.k8s.io":            "k8s.io/api/networking",
 	"node.k8s.io":                  "k8s.io/api/node",
 	"policy":                       "k8s.io/api/policy",
-	"rbac.authorization.k8s.io":    "k8s.io/api/authorization",
+	"rbac.authorization.k8s.io":    "k8s.io/api/rbac",
 	"scheduling.k8s.io":            "k8s.io/api/scheduling",
 	"storage.k8s.io":               "k8s.io/api/storage",
 	"corev1":                       "k8s.io/api/core",

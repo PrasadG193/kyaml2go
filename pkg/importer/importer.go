@@ -70,7 +70,7 @@ func (i *ImportManager) RenamePackages() {
 	for _, line := range kubeObject {
 		// Check if end of the struct
 		// Pop package names from stack
-		if strings.EqualFold(line, "},") {
+		if strings.EqualFold(strings.Join(strings.Fields(line), ""), "},") {
 			if p, ok := s.Pop(); ok {
 				parentPkg, _ := vp.Top()
 				if reflect.DeepEqual(parentPkg, p) {
