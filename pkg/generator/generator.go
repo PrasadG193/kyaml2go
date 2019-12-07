@@ -236,12 +236,6 @@ func (c *CodeGen) cleanupObject() {
 	kubeObject = replaceSubObject(kubeObject, "Status", "", -1)
 	kubeObject = removeNilFields(kubeObject)
 	kubeObject = updateResources(kubeObject)
-	if len(c.replicaCount) > 0 {
-		kubeObject = replaceSubObject(kubeObject, "Replicas:", fmt.Sprintf("Replicas: int32Ptr(%s),", c.replicaCount), -1)
-	}
-	if len(c.termGracePeriod) > 0 {
-		kubeObject = replaceSubObject(kubeObject, "TerminationGracePeriodSeconds:", fmt.Sprintf("TerminationGracePeriodSeconds: int64Ptr(%s),", c.termGracePeriod), -1)
-	}
 
 	// Remove binary secret data
 	if c.kind == "Secret" {
@@ -284,10 +278,6 @@ func prettyStruct(obj string) string {
 		fmt.Println("gofmt error", err)
 	}
 	return string(goFormat)
-}
-
-func addIntptrFunc(bytes string) string {
-	return fmt.Sprintf(`func int%sPtr(i int%s) *int%s { return &i }`, bytes, bytes, bytes)
 }
 
 func removeNilFields(kubeobject []string) []string {
@@ -359,7 +349,7 @@ func (c *CodeGen) addPtrMethods() {
 	object := strings.Split(c.kubeObject, "\n")
 	for i, line := range object {
 		var typeName, funcName, param string
-		re := regexp.MustCompile(`(?m)\(&([a-zA-Z0-1]*.([a-zA-Z]*))\)\(([a-zA-Z0-9"]*)\)`)
+		re := regexp.MustCompile(`(?m)\(&([a-zA-Z0-9]*.([a-zA-Z]*))\)\(([a-zA-Z0-9"]*)\)`)
 		matched := re.FindAllStringSubmatch(line, -1)
 		if len(matched) == 1 && len(matched[0]) == 4 {
 			typeName = matched[0][1]
@@ -406,13 +396,4 @@ func updateResources(object []string) []string {
 		}
 	}
 	return object
-}
-
-func addReplicaPointer(replicaCount string, kubeobject []string) []string {
-	for i, _ := range kubeobject {
-		if strings.Contains(kubeobject[i], "Replicas") {
-			kubeobject[i] = fmt.Sprintf("Replicas: int32Ptr(%s),", replicaCount)
-		}
-	}
-	return kubeobject
 }

@@ -45,7 +45,6 @@ func New(kind, group, version, obj string) ImportManager {
 }
 
 func (i *ImportManager) FindImports() (string, string) {
-	//	pkgList := i.ListUsedPackages()
 	i.RenamePackages()
 
 	var imports string
@@ -107,10 +106,17 @@ func (i *ImportManager) RenamePackages() {
 			continue
 		}
 
-		// If part of valid kind e.g PodSpec
-		for k, _ := range kube.KindApiMap {
-			if strings.Contains(kind, k) {
-				kind = k
+		// If kind specs
+		if _, found := kube.KindApiMap[strings.TrimSuffix(kind, "Spec")]; found {
+			kind = strings.TrimSuffix(kind, "Spec")
+		}
+
+		// If part of valid kind e.g DeploymentStrategy
+		if _, found := kube.KindApiMap[kind]; !found {
+			for parent, _ := range kube.KindApiMap {
+				if strings.HasPrefix(kind, parent) {
+					kind = parent
+				}
 			}
 		}
 
