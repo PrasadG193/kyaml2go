@@ -2,7 +2,7 @@
 let BASE_URL = "https://us-central1-yaml2go.cloudfunctions.net/kgoclient-gen?method="
 
 let go = document.getElementById("goGenerator")
-
+let codecopied = document.getElementById("codecopied")
 let editor = ""
 
 window.generatorCall=function (action){
@@ -89,3 +89,13 @@ function hideError(){
   document.getElementById("err-span").innerHTML="";
   document.getElementById("error").style.display="none"
 }
+
+
+document.getElementById("copybutton").addEventListener("click", function (){
+  // will have to check browser compatibility for this
+  navigator.clipboard.writeText(go.getValue())
+  codecopied.style.display="inline"
+  window.setTimeout(function (){
+    codecopied.style.display="none"
+  }, 1500)
+});
