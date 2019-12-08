@@ -38,6 +38,7 @@ var ApiPkgMap = map[string]string{
 var KindApiMap = map[string]string{
 	"MutatingWebhookConfiguration":   "admissionregistration.k8s.io",
 	"ValidatingWebhookConfiguration": "admissionregistration.k8s.io",
+	"ServiceReference":               "admissionregistration.k8s.io",
 	"CustomResourceDefinition":       "apiextensions.k8s.io",
 	"APIService":                     "apiregistration.k8s.io",
 	"ControllerRevision":             "apps",
@@ -59,6 +60,7 @@ var KindApiMap = map[string]string{
 	"PodMetrics":                     "metrics.k8s.io",
 	"ManagedCertificate":             "networking.gke.io",
 	"NetworkPolicy":                  "networking.k8s.io",
+	"Ingress":                        "networking.k8s.io",
 	"PodDisruptionBudget":            "policy",
 	"PodSecurityPolicy":              "policy",
 	"ClusterRoleBinding":             "rbac.authorization.k8s.io",
@@ -88,6 +90,7 @@ var KindApiMap = map[string]string{
 	"Service":                        "corev1",
 	"PersistentVolumeMode":           "corev1",
 	"ResourceRequirements":           "corev1",
+	"Protocol":                       "corev1",
 	"TypeMeta":                       "metav1",
 	"ObjectMeta":                     "metav1",
 	"LabelSelector":                  "metav1",

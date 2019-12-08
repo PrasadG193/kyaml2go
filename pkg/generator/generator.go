@@ -110,7 +110,7 @@ func (c *CodeGen) addKubeObject() error {
 	}
 
 	// Add object name
-	re = regexp.MustCompile(`name:\s?"?([-a-zA-Z]+)`)
+	re = regexp.MustCompile(`name:\s?"?([-a-zA-Z\.]+)`)
 	matched = re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) >= 1 && len(matched[0]) == 2 {
 		c.name = matched[0][1]
@@ -126,7 +126,6 @@ func (c *CodeGen) addKubeObject() error {
 
 	// Pretty struct
 	c.kubeObject = prettyStruct(render.AsCode(c.runtimeObject))
-	//fmt.Printf("%s\n\n", c.kubeObject)
 	return nil
 }
 
@@ -148,9 +147,21 @@ func (c *CodeGen) addKubeClient() {
         }
 	`)
 
-	method := fmt.Sprintf("kubeclient := clientset.%s%s().%ss()", strings.Split(c.group, ".")[0], c.version, c.kind)
+	// Pod => Pods
+	kindPlurals := fmt.Sprintf("%ss", c.kind)
+	// Ingress => Ingresses
+	if strings.HasSuffix(c.kind, "ss") {
+		kindPlurals = fmt.Sprintf("%ses", c.kind)
+	}
+	// PodSecurityPolicy => PodSecurityPolicies
+	if strings.HasSuffix(c.kind, "y") {
+		// Ingress => Ingresses
+		kindPlurals = fmt.Sprintf("%sies", strings.TrimRight(c.kind, "y"))
+	}
+
+	method := fmt.Sprintf("kubeclient := clientset.%s%s().%s()", strings.Split(c.group, ".")[0], c.version, kindPlurals)
 	if _, ok := kube.KindNamespaced[c.kind]; ok {
-		method = fmt.Sprintf("kubeclient := clientset.%s%s().%ss(\"%s\")", strings.Split(c.group, ".")[0], c.version, c.kind, c.namespace)
+		method = fmt.Sprintf("kubeclient := clientset.%s%s().%s(\"%s\")", strings.Split(c.group, ".")[0], c.version, kindPlurals, c.namespace)
 	}
 	c.kubeClient += method
 }
@@ -238,6 +249,7 @@ func (c *CodeGen) cleanupObject() {
 	kubeObject := strings.Split(c.kubeObject, "\n")
 	kubeObject = replaceSubObject(kubeObject, "CreationTimestamp", "", -1)
 	kubeObject = replaceSubObject(kubeObject, "Status", "", -1)
+	kubeObject = replaceSubObject(kubeObject, "Generation", "", -1)
 	kubeObject = removeNilFields(kubeObject)
 	kubeObject = updateResources(kubeObject)
 
@@ -353,7 +365,7 @@ func (c *CodeGen) addPtrMethods() {
 	object := strings.Split(c.kubeObject, "\n")
 	for i, line := range object {
 		var typeName, funcName, param string
-		re := regexp.MustCompile(`(?m)\(&([a-zA-Z0-9]*.([a-zA-Z]*))\)\(([a-zA-Z0-9"]*)\)`)
+		re := regexp.MustCompile(`(?m)\(&([a-zA-Z0-9]*.([a-zA-Z]*))\)\(([a-zA-Z0-9-\/"]*)\)`)
 		matched := re.FindAllStringSubmatch(line, -1)
 		if len(matched) == 1 && len(matched[0]) == 4 {
 			typeName = matched[0][1]
@@ -370,6 +382,13 @@ func (c *CodeGen) addPtrMethods() {
 			`, funcName, typeName, typeName)
 			// func int%sPtr(i int%s) *int%s { return &i }
 		}
+
+		// Fix "&" => "*" values altered by go-render
+		re = regexp.MustCompile(`(?m)".*[&].*"`)
+		matched = re.FindAllStringSubmatch(line, -1)
+		if len(matched) == 1 {
+			object[i] = strings.Replace(object[i], "&", "*", -1)
+		}
 	}
 	c.kubeObject = ""
 	for _, l := range object {
@@ -380,23 +399,14 @@ func (c *CodeGen) addPtrMethods() {
 }
 
 func updateResources(object []string) []string {
-	cpu := "\"cpu\": resource.Quantity"
-	mem := "\"memory\": resource.Quantity"
-	storage := "\"storage\": resource.Quantity"
+	resources := []string{"cpu", "memory", "storage", "pods"}
 	for i, line := range object {
-		if strings.Contains(line, cpu) {
-			value, format := parseResourceValue(object[i+1:])
-			replaceSubObject(object[i:], cpu, fmt.Sprintf("\"cpu\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
-		}
-
-		if strings.Contains(line, mem) {
-			value, format := parseResourceValue(object[i+1:])
-			replaceSubObject(object[i:], mem, fmt.Sprintf("\"memory\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
-		}
-
-		if strings.Contains(line, storage) {
-			value, format := parseResourceValue(object[i+1:])
-			replaceSubObject(object[i:], storage, fmt.Sprintf("\"storage\": *resource.NewQuantity(%s, resource.%s),", value, format), 1)
+		for _, res := range resources {
+			s := fmt.Sprintf("\"%s\": resource.Quantity", res)
+			if strings.Contains(line, s) {
+				value, format := parseResourceValue(object[i+1:])
+				replaceSubObject(object[i:], s, fmt.Sprintf("\"%s\": *resource.NewQuantity(%s, resource.%s),", res, value, format), 1)
+			}
 		}
 	}
 	return object

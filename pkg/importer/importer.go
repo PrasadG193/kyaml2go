@@ -19,7 +19,7 @@ var COMMON_IMPORTS = []string{
 	"k8s.io/client-go/util/homedir",
 }
 
-const PACKAGE_FORMAT = `(?m)[*|&|\]|\s]([A-Za-z0-9]*?)\.?([A-Za-z]+)[{|(]`
+const PACKAGE_FORMAT = `(?m)[*&\]\s]([A-Za-z0-9]*?)\.?([A-Za-z]+)[{|()]`
 
 type ImportManager struct {
 	Kind    string
@@ -149,10 +149,10 @@ func (i *ImportManager) RenamePackages() {
 		// Extract package name from complete package path
 		p := strings.Split(kube.ApiPkgMap[group], "/")
 		importAs := p[len(p)-1] + version
+		i.Imports[kube.ApiPkgMap[group]+"/"+version] = importAs
 		if strings.Contains(line, "{") {
 			vp.Push(importAs)
 			s.Push(importAs)
-			i.Imports[kube.ApiPkgMap[group]+"/"+version] = importAs
 		}
 
 		// Modify imported struct name
