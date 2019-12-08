@@ -281,7 +281,7 @@ func prettyStruct(obj string) string {
 }
 
 func removeNilFields(kubeobject []string) []string {
-	nilFields := []string{"nil", "\"\"", "false"}
+	nilFields := []string{"nil", "\"\"", "false", "{}"}
 	for i, line := range kubeobject {
 		for _, n := range nilFields {
 			if strings.Contains(line, n) {

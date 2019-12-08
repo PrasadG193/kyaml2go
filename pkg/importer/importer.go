@@ -19,7 +19,7 @@ var COMMON_IMPORTS = []string{
 	"k8s.io/client-go/util/homedir",
 }
 
-const PACKAGE_FORMAT = `(?m)[*|&|\]|\s]([A-Za-z0-9]*)\.([A-Za-z]+)`
+const PACKAGE_FORMAT = `(?m)[*|&|\]|\s]([A-Za-z0-9]*?)\.?([A-Za-z]+)[{|(]`
 
 type ImportManager struct {
 	Kind    string
@@ -70,7 +70,7 @@ func (i *ImportManager) RenamePackages() {
 	for _, line := range kubeObject {
 		// Check if end of the struct
 		// Pop package names from stack
-		if strings.EqualFold(strings.Join(strings.Fields(line), ""), "},") {
+		if strings.HasSuffix(line, "},") {
 			if p, ok := s.Pop(); ok {
 				parentPkg, _ := vp.Top()
 				if reflect.DeepEqual(parentPkg, p) {
@@ -90,6 +90,15 @@ func (i *ImportManager) RenamePackages() {
 		}
 
 		_, version, kind := matched[0][0], matched[0][1], matched[0][2]
+		// if builtin type
+		if len(version) == 0 {
+			if strings.Contains(line, "{") {
+				s.Push(kind)
+			}
+			i.Object += line + "\n"
+			continue
+		}
+
 		// New struct started
 		// if kubernetes resource, e.g v1.ObjectMeta
 		if _, found := kube.ApiVersions[version]; !found {
@@ -127,6 +136,10 @@ func (i *ImportManager) RenamePackages() {
 			if importAs, ok := vp.Top(); ok {
 				// Modify imported struct name
 				i.Object += strings.Replace(line, version, importAs.(string), 1) + "\n"
+				if strings.Contains(line, "{") {
+					vp.Push(importAs)
+					s.Push(importAs.(string))
+				}
 			} else {
 				i.Object += line + "\n"
 			}
