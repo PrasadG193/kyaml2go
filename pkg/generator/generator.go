@@ -39,7 +39,7 @@ type CodeGen struct {
 	runtimeObject   runtime.Object
 	kubeObject      string
 	kubeManage      string
-	extraFuncs      string
+	extraFuncs      map[string]string
 }
 
 func (m KubeMethod) String() string {
@@ -48,8 +48,9 @@ func (m KubeMethod) String() string {
 
 func New(raw []byte, method KubeMethod) CodeGen {
 	return CodeGen{
-		raw:    raw,
-		method: method,
+		raw:        raw,
+		method:     method,
+		extraFuncs: make(map[string]string),
 	}
 }
 
@@ -217,7 +218,10 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 	}
 	`, c.imports, c.kubeClient, kubeobject, c.kubeManage)
 
-	main += c.extraFuncs
+	// Add pointer methods
+	for _, f := range c.extraFuncs {
+		main += f
+	}
 
 	// Run gofmt
 	goFormat, err := format.Source([]byte(main))
@@ -359,7 +363,7 @@ func (c *CodeGen) addPtrMethods() {
 			}
 			param = matched[0][3]
 			object[i] = strings.Replace(object[i], matched[0][0], fmt.Sprintf("%s(%s)", funcName, param), 1)
-			c.extraFuncs += fmt.Sprintf(`
+			c.extraFuncs[funcName] = fmt.Sprintf(`
 			func %s(p %s) *%s { 
 				return &p 
 			}
