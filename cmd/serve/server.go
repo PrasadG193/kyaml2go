@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/PrasadG193/kgoclient-gen/pkg/serve"
+	"github.com/PrasadG193/kyaml2go/pkg/serve"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 )
