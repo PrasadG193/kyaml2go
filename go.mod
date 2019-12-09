@@ -1,4 +1,4 @@
-module github.com/PrasadG193/kgoclient-gen
+module github.com/PrasadG193/kyaml2go
 
 go 1.13
 

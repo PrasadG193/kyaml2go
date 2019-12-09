@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/PrasadG193/kgoclient-gen/pkg/importer"
-	"github.com/PrasadG193/kgoclient-gen/pkg/kube"
+	"github.com/PrasadG193/kyaml2go/pkg/importer"
+	"github.com/PrasadG193/kyaml2go/pkg/kube"
 )
 
 type KubeMethod string
@@ -78,6 +78,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 	return c.prettyCode()
 }
 
+// addKubeObject converts raw yaml specs to runtime object
 func (c *CodeGen) addKubeObject() error {
 	var err error
 	decode := scheme.Codecs.UniversalDeserializer().Decode
@@ -129,8 +130,8 @@ func (c *CodeGen) addKubeObject() error {
 	return nil
 }
 
+// addKubeClient adds code to create kube client
 func (c *CodeGen) addKubeClient() {
-	// TODO: dynamic namespace
 	c.kubeClient = fmt.Sprintf(`var kubeconfig string
 	kubeconfig, ok := os.LookupEnv("KUBECONFIG")
 	if !ok {
@@ -166,6 +167,7 @@ func (c *CodeGen) addKubeClient() {
 	c.kubeClient += method
 }
 
+// addKubeManage add methods to manage job resource
 func (c *CodeGen) addKubeManage() {
 	var method string
 	switch c.method {
@@ -203,6 +205,7 @@ func (c *CodeGen) addKubeManage() {
 	`, strings.Title(c.method.String()), c.kind, method)
 }
 
+// prettyCode generates final go code well indented by gofmt
 func (c *CodeGen) prettyCode() (code string, err error) {
 	kubeobject := fmt.Sprintf(`// Create resource object
 	object := %s`, c.kubeObject)
@@ -242,6 +245,7 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 	return string(goFormat), nil
 }
 
+// cleanupObject removes fields with nil values
 func (c *CodeGen) cleanupObject() {
 	if c.method == MethodDelete || c.method == MethodGet {
 		c.kubeObject = ""
@@ -267,6 +271,7 @@ func (c *CodeGen) cleanupObject() {
 	}
 }
 
+// secretStringData replaces binary data in resource object to readable string data
 func (c *CodeGen) secretStringData() {
 	if c.kind != "Secret" {
 		return
@@ -398,6 +403,8 @@ func (c *CodeGen) addPtrMethods() {
 	}
 }
 
+// e.g "cpu": resource.Quantity(1Gi)" => "cpu": *resource.NewQuantity(700, resource.DecimalSI)"
+// TODO: Use resource.MustParse() method instead
 func updateResources(object []string) []string {
 	resources := []string{"cpu", "memory", "storage", "pods"}
 	for i, line := range object {

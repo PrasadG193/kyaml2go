@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/PrasadG193/kgoclient-gen/pkg/kube"
-	"github.com/PrasadG193/kgoclient-gen/pkg/stack"
+	"github.com/PrasadG193/kyaml2go/pkg/kube"
+	"github.com/PrasadG193/kyaml2go/pkg/stack"
 )
 
 var COMMON_IMPORTS = []string{
@@ -45,7 +45,7 @@ func New(kind, group, version, obj string) ImportManager {
 }
 
 func (i *ImportManager) FindImports() (string, string) {
-	i.RenamePackages()
+	i.importAndRename()
 
 	var imports string
 	for k, v := range i.Imports {
@@ -55,11 +55,12 @@ func (i *ImportManager) FindImports() (string, string) {
 	return imports, i.Object
 }
 
-// RenamePackages renames packages having same name and modifies the kubeobject accordingly
+// importAndRename finds out if the external package needs to be imported.
+// Renames packages having same name and modifies the kubeobject accordingly
 // e.g        v1 -> corev1
 //       apps/v1 -> appsv1
 // extensions/v1 -> extensionsv1
-func (i *ImportManager) RenamePackages() {
+func (i *ImportManager) importAndRename() {
 	// Split kubeobject to read it line by line
 	kubeObject := strings.Split(i.Object, "\n")
 	i.Object = ""

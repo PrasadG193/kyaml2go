@@ -7,13 +7,13 @@ import (
 	"log"
 	"os"
 
-	gen "github.com/PrasadG193/kgoclient-gen/pkg/generator"
+	gen "github.com/PrasadG193/kyaml2go/pkg/generator"
 )
 
 func main() {
 
 	app := cli.NewApp()
-	app.Name = "kgoclientgen"
+	app.Name = "kyaml2go"
 	app.Usage = "Generate go code to manage Kubernetes resources using client-go sdks"
 
 	app.Commands = []cli.Command{
