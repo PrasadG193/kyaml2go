@@ -9,6 +9,7 @@ import (
 	"github.com/gdexlab/go-render/render"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/PrasadG193/kyaml2go/pkg/importer"
@@ -81,14 +82,14 @@ func (c *CodeGen) Generate() (code string, err error) {
 // addKubeObject converts raw yaml specs to runtime object
 func (c *CodeGen) addKubeObject() error {
 	var err error
+	var objMeta *schema.GroupVersionKind
 	decode := scheme.Codecs.UniversalDeserializer().Decode
-	c.runtimeObject, _, err = decode(c.raw, nil, nil)
-	if err != nil {
+	c.runtimeObject, objMeta, err = decode(c.raw, nil, nil)
+	if err != nil || objMeta == nil {
 		return fmt.Errorf("Error while decoding YAML object. Err was: %s", err)
 	}
 
-	// Find group and version
-	objMeta := c.runtimeObject.GetObjectKind().GroupVersionKind()
+	// Find group, kind and version
 	c.kind = strings.Title(objMeta.Kind)
 	c.group = strings.Title(objMeta.Group)
 	if len(c.group) == 0 {
