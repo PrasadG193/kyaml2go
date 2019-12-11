@@ -5,6 +5,10 @@ Go client code generator from Kubernetes resource specs yaml
 
 ![https://github.com/PrasadG193/kyaml2go](./k2go.png)
 
+## Supported resources
+
+List of supported Kinds and Groups can be found here: https://github.com/PrasadG193/kyaml2go/blob/master/pkg/kube/map.go#L38
+
 ## Installation
 
 ### Install From Source
