@@ -1,4 +1,7 @@
 # kyaml2go <sub>(Pronounced as camel2go :camel:)</sub>
+
+[![Build Status](https://travis-ci.org/PrasadG193/kyaml2go.svg?branch=master)](https://travis-ci.org/PrasadG193/kyaml2go)
+
 https://kyaml2go.prasadg.dev
 
 Go client code generator from Kubernetes resource specs yaml
