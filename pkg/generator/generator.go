@@ -67,8 +67,6 @@ func (c *CodeGen) Generate() (code string, err error) {
 	c.addKubeManage()
 	// Remove unnecessary fields
 	c.cleanupObject()
-	// Replace Data with StringData for secret object types
-	c.secretStringData()
 
 	if c.method != MethodDelete && c.method != MethodGet {
 		i := importer.New(c.kind, c.group, c.version, c.kubeObject)
@@ -125,6 +123,9 @@ func (c *CodeGen) addKubeObject() error {
 	if len(matched) >= 1 && len(matched[0]) == 2 {
 		c.namespace = matched[0][1]
 	}
+
+	// Replace Data with StringData for secret object types
+	c.secretStringData()
 
 	// Pretty struct
 	c.kubeObject = prettyStruct(render.AsCode(c.runtimeObject))
