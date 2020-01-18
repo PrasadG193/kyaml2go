@@ -10,7 +10,8 @@ import (
 	"github.com/PrasadG193/kyaml2go/pkg/stack"
 )
 
-var COMMON_IMPORTS = []string{
+// CommonImports contains common packages required for all the resources
+var CommonImports = []string{
 	"os",
 	"fmt",
 	"path/filepath",
@@ -19,8 +20,9 @@ var COMMON_IMPORTS = []string{
 	"k8s.io/client-go/util/homedir",
 }
 
-const PACKAGE_FORMAT = `(?m)[*&\]\s]([A-Za-z0-9]*?)\.?([A-Za-z]+)[{|()]`
+const packageFormat = `(?m)[*&\]\s]([A-Za-z0-9]*?)\.?([A-Za-z]+)[{|()]`
 
+// ImportManager holds resource Kind, Group, Versions to figure out imports
 type ImportManager struct {
 	Kind    string
 	Group   string
@@ -29,6 +31,7 @@ type ImportManager struct {
 	Imports map[string]string
 }
 
+// New returns an instance of ImportManager
 func New(kind, group, version, obj string) ImportManager {
 	im := ImportManager{
 		Kind:    kind,
@@ -38,12 +41,13 @@ func New(kind, group, version, obj string) ImportManager {
 	}
 	im.Imports = make(map[string]string)
 	// Add default imports
-	for _, i := range COMMON_IMPORTS {
+	for _, i := range CommonImports {
 		im.Imports[i] = ""
 	}
 	return im
 }
 
+// FindImports figures out imports required to compile generated Go code
 func (i *ImportManager) FindImports() (string, string) {
 	i.importAndRename()
 
@@ -83,7 +87,7 @@ func (i *ImportManager) importAndRename() {
 		}
 
 		// Line has external package
-		var re = regexp.MustCompile(PACKAGE_FORMAT)
+		var re = regexp.MustCompile(packageFormat)
 		matched := re.FindAllStringSubmatch(line, -1)
 		if len(matched) < 1 || len(matched[0]) < 3 {
 			i.Object += line + "\n"
@@ -102,14 +106,14 @@ func (i *ImportManager) importAndRename() {
 
 		// New struct started
 		// if kubernetes resource, e.g v1.ObjectMeta
-		if _, found := kube.ApiVersions[version]; !found {
+		if _, found := kube.APIVersions[version]; !found {
 			if strings.Contains(line, "{") {
 				s.Push(version)
 			}
 
 			i.Object += line + "\n"
 			// Extract package name from full path
-			if v, ok := kube.ApiPkgMap[version]; ok {
+			if v, ok := kube.APIPkgMap[version]; ok {
 				version = v
 			}
 			i.Imports[version] = ""
@@ -117,13 +121,13 @@ func (i *ImportManager) importAndRename() {
 		}
 
 		// If kind specs
-		if _, found := kube.KindApiMap[strings.TrimSuffix(kind, "Spec")]; found {
+		if _, found := kube.KindAPIMap[strings.TrimSuffix(kind, "Spec")]; found {
 			kind = strings.TrimSuffix(kind, "Spec")
 		}
 
 		// If part of valid kind e.g DeploymentStrategy
-		if _, found := kube.KindApiMap[kind]; !found {
-			for parent, _ := range kube.KindApiMap {
+		if _, found := kube.KindAPIMap[kind]; !found {
+			for parent := range kube.KindAPIMap {
 				if strings.HasPrefix(kind, parent) {
 					kind = parent
 				}
@@ -131,7 +135,7 @@ func (i *ImportManager) importAndRename() {
 		}
 
 		// If not valid kind
-		group, found := kube.KindApiMap[kind]
+		group, found := kube.KindAPIMap[kind]
 		if !found {
 			// If group is nil, use parent package
 			if importAs, ok := vp.Top(); ok {
@@ -148,9 +152,9 @@ func (i *ImportManager) importAndRename() {
 		}
 
 		// Extract package name from complete package path
-		p := strings.Split(kube.ApiPkgMap[group], "/")
+		p := strings.Split(kube.APIPkgMap[group], "/")
 		importAs := p[len(p)-1] + version
-		i.Imports[kube.ApiPkgMap[group]+"/"+version] = importAs
+		i.Imports[kube.APIPkgMap[group]+"/"+version] = importAs
 		if strings.Contains(line, "{") {
 			vp.Push(importAs)
 			s.Push(importAs)
