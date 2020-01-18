@@ -9,6 +9,11 @@ services:
 env:
   - GO111MODULE=on
 
+before_script:
+  - hack/verify-gofmt.sh
+  - hack/verify-golint.sh
+  - hack/verify-govet.sh
+
 jobs:
   include:
     - stage: test
