@@ -12,6 +12,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// HandleConvert parses http request to get K8s resource specs and return generated Go code
+// for valid resource specs
 func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Enable CORS
 	w.Header().Set("Access-Control-Allow-Origin", "*")

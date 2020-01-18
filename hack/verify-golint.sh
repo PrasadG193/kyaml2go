@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+find_files() {
+  find . -name '*.go'
+}
+
+bad_files=$(find_files | xargs -I@ bash -c "golint @")
+if [[ -n "${bad_files}" ]]; then
+  echo "${bad_files}"
+  exit 1
+fi

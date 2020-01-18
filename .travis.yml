@@ -9,6 +9,11 @@ services:
 env:
   - GO111MODULE=on
 
+before_script:
+  - hack/verify-gofmt.sh
+  - hack/verify-golint.sh
+  - hack/verify-govet.sh
+
 jobs:
   include:
     - stage: test
@@ -17,8 +22,6 @@ jobs:
         - go get sigs.k8s.io/kind
         # Create a new Kubernetes cluster using KinD
         - kind create cluster
-        # Set KUBECONFIG environment variable
-        - export KUBECONFIG="$(kind get kubeconfig-path)"
         - go mod download
       script:
         - ./hack/e2e-test.sh

@@ -4,7 +4,8 @@ import (
 	"strings"
 )
 
-var ApiVersions = map[string]bool{
+// APIVersions map of allowed K8s API VERSIONS
+var APIVersions = map[string]bool{
 	"v1":       true,
 	"v1beta1":  true,
 	"v1beta2":  true,
@@ -12,7 +13,8 @@ var ApiVersions = map[string]bool{
 	"v1alpha1": true,
 }
 
-var ApiPkgMap = map[string]string{
+// APIPkgMap maps K8s API Groups to their corresponding go packages
+var APIPkgMap = map[string]string{
 	"admissionregistration.k8s.io": "k8s.io/api/admissionregistration",
 	"apiextensions.k8s.io":         "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions",
 	"apiregistration.k8s.io":       "k8s.io/kube-aggregator/pkg/apis/apiregistration",
@@ -35,7 +37,8 @@ var ApiPkgMap = map[string]string{
 	"resource":                     "k8s.io/apimachinery/pkg/api/resource",
 }
 
-var KindApiMap = map[string]string{
+// KindAPIMap maps K8s Kinds to their respective API Groups
+var KindAPIMap = map[string]string{
 	"MutatingWebhookConfiguration":   "admissionregistration.k8s.io",
 	"ValidatingWebhookConfiguration": "admissionregistration.k8s.io",
 	"ServiceReference":               "admissionregistration.k8s.io",
@@ -96,6 +99,7 @@ var KindApiMap = map[string]string{
 	"LabelSelector":                  "metav1",
 }
 
+// KindNamespaced keeps maps of Namespaced K8s resources
 var KindNamespaced = map[string]bool{
 	"Binding":                  true,
 	"ConfigMap":                true,
@@ -127,6 +131,7 @@ var KindNamespaced = map[string]bool{
 	"Role":                     true,
 }
 
+// GenerateImportAs finds short name to import package as
 func GenerateImportAs(pkg, version string) string {
 	p := strings.Split(pkg, "/")
 	return p[len(p)-1] + version

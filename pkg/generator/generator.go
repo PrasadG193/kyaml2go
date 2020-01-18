@@ -16,15 +16,21 @@ import (
 	"github.com/PrasadG193/kyaml2go/pkg/kube"
 )
 
+// KubeMethod define methods to manage K8s resource
 type KubeMethod string
 
 const (
+	// MethodCreate to create K8s resource
 	MethodCreate = "create"
+	// MethodGet to get K8s resource
 	MethodGet    = "get"
+	// MethodUpdate to update K8s resource
 	MethodUpdate = "update"
+	// MethodDelete to delete K8s resource
 	MethodDelete = "delete"
 )
 
+// CodeGen holds K8s resource object
 type CodeGen struct {
 	raw             []byte
 	method          KubeMethod
@@ -47,6 +53,7 @@ func (m KubeMethod) String() string {
 	return string(m)
 }
 
+// New returns instance of CodeGen
 func New(raw []byte, method KubeMethod) CodeGen {
 	return CodeGen{
 		raw:        raw,
@@ -55,6 +62,7 @@ func New(raw []byte, method KubeMethod) CodeGen {
 	}
 }
 
+// Generate returns Go code for KubeMethod on a K8s resource
 func (c *CodeGen) Generate() (code string, err error) {
 	// Convert yaml specs to runtime object
 	if err = c.addKubeObject(); err != nil {
@@ -175,7 +183,7 @@ func (c *CodeGen) addKubeManage() {
 	switch c.method {
 	case MethodDelete:
 		// Add imports
-		for _, i := range importer.COMMON_IMPORTS {
+		for _, i := range importer.CommonImports {
 			c.imports += fmt.Sprintf("\"%s\"\n", i)
 		}
 		c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
@@ -185,7 +193,7 @@ func (c *CodeGen) addKubeManage() {
 
 	case MethodGet:
 		// Add imports
-		for _, i := range importer.COMMON_IMPORTS {
+		for _, i := range importer.CommonImports {
 			c.imports += fmt.Sprintf("\"%s\"\n", i)
 		}
 		c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
@@ -333,10 +341,10 @@ func replaceSubObject(object []string, objectName, newObject string, n int) []st
 			continue
 		}
 		if strings.Contains(line, "{") {
-			depth += 1
+			depth++
 		}
 		if strings.Contains(line, "}") {
-			depth -= 1
+			depth--
 		}
 		if strings.Contains(line, objectName) {
 			object[i] = newObject
