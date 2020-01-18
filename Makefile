@@ -1,6 +1,3 @@
-IMAGE_REPO=infracloud/botkube
-TAG=$(shell cut -d'=' -f2- .release)
-
 .DEFAULT_GOAL := build
 .PHONY: build pre-build system-check
 
