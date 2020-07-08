@@ -16,7 +16,7 @@ const port = "8080"
 func main() {
 	router := httprouter.New()
 	log.Printf("server started accepting requests on port=%s..\n", port)
-	router.POST(fmt.Sprintf("%s/convert", apiVersion), serve.HandleConvert)
+	router.POST(fmt.Sprintf("/%s/convert", apiVersion), serve.HandleConvert)
 
 	handler := cors.Default().Handler(router)
 	log.Fatal(http.ListenAndServe(":8080", handler))
