@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
+	//crScheme "k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme"
 
 	"github.com/PrasadG193/kyaml2go/pkg/importer"
 	"github.com/PrasadG193/kyaml2go/pkg/kube"
@@ -28,6 +29,9 @@ const (
 	MethodUpdate = "update"
 	// MethodDelete to delete K8s resource
 	MethodDelete = "delete"
+
+	crdKind   = "CustomResourceDefinition"
+	crdClient = "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 )
 
 // CodeGen holds K8s resource object
@@ -39,6 +43,10 @@ type CodeGen struct {
 	kind            string
 	group           string
 	version         string
+	client          string
+	crAPI           string
+	isCR            bool
+	isNamespaced    bool
 	replicaCount    string
 	termGracePeriod string
 	imports         string
@@ -54,11 +62,15 @@ func (m KubeMethod) String() string {
 }
 
 // New returns instance of CodeGen
-func New(raw []byte, method KubeMethod) CodeGen {
+func New(raw []byte, method KubeMethod, isCR, isNamespaced bool, client, crAPI string) CodeGen {
 	return CodeGen{
-		raw:        raw,
-		method:     method,
-		extraFuncs: make(map[string]string),
+		raw:          raw,
+		method:       method,
+		client:       client,
+		crAPI:        crAPI,
+		isCR:         isCR,
+		isNamespaced: isNamespaced,
+		extraFuncs:   make(map[string]string),
 	}
 }
 
@@ -67,6 +79,10 @@ func (c *CodeGen) Generate() (code string, err error) {
 	// Convert yaml specs to runtime object
 	if err = c.addKubeObject(); err != nil {
 		return code, err
+	}
+
+	if c.crAPI != "" {
+		setCRImports(c.kind, c.group, c.version, c.crAPI, c.isNamespaced)
 	}
 
 	// Create kubeclient
@@ -91,6 +107,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 func (c *CodeGen) addKubeObject() error {
 	var err error
 	var objMeta *schema.GroupVersionKind
+	setScheme()
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	c.runtimeObject, objMeta, err = decode(c.raw, nil, nil)
 	if err != nil || objMeta == nil {
@@ -120,7 +137,7 @@ func (c *CodeGen) addKubeObject() error {
 	}
 
 	// Add object name
-	re = regexp.MustCompile(`name:\s?"?([-a-zA-Z\.]+)`)
+	re = regexp.MustCompile(`name:\s?"?([-a-zA-Z\d\.]+)`)
 	matched = re.FindAllStringSubmatch(string(c.raw), -1)
 	if len(matched) >= 1 && len(matched[0]) == 2 {
 		c.name = matched[0][1]
@@ -188,6 +205,12 @@ func (c *CodeGen) addKubeManage() {
 		c.imports += fmt.Sprintf("\"%s\"\n", i)
 	}
 	clientPkg := "k8s.io/client-go/kubernetes"
+	if c.kind == crdKind {
+		clientPkg = crdClient
+	}
+	if c.client != "" {
+		clientPkg = c.client
+	}
 	c.imports += fmt.Sprintf("clientset \"%s\"\n", clientPkg)
 	c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
 
@@ -213,6 +236,13 @@ func (c *CodeGen) addKubeManage() {
 	}
 
 	c.kubeManage += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
+}
+
+func prepareMethod(isCR bool, method KubeMethod) string {
+	if isCR {
+		return fmt.Sprintf("_, err = kubeclient.%s(context.TODO(), object, metav1.%sOptions{})", strings.Title(method.String()))
+	}
+	return fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(method.String()))
 }
 
 // prettyCode generates final go code well indented by gofmt
@@ -247,7 +277,6 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 	for _, f := range c.extraFuncs {
 		main += f
 	}
-
 	// Run gofmt
 	goFormat, err := format.Source([]byte(main))
 	if err != nil {
@@ -428,4 +457,11 @@ func updateResources(object []string) []string {
 		}
 	}
 	return object
+}
+
+func setCRImports(kind, group, version, pkg string, isNamespaced bool) {
+	kube.APIPkgMap[group] = pkg
+	kube.KindAPIMap[kind] = group
+	kube.APIVersions[version] = true
+	kube.KindNamespaced[kind] = isNamespaced
 }

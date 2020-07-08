@@ -7,8 +7,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/PrasadG193/kyaml2go/cmd/option"
 	gen "github.com/PrasadG193/kyaml2go/pkg/generator"
 )
+
+var flags = option.Flags
 
 func main() {
 
@@ -20,57 +23,34 @@ func main() {
 		{
 			Name:  "create",
 			Usage: "Generate code for creating a resource",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:     "file, f",
-					Usage:    "K8s resource spec yaml file",
-					Required: true,
-				},
-			},
+			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodCreate)
+				return generate(c.String("file"), gen.MethodCreate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
 			Name:  "update",
 			Usage: "Generate code for updating a resource",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:     "file, f",
-					Usage:    "K8s resource spec yaml file",
-					Required: true,
-				},
-			},
+			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodUpdate)
+				return generate(c.String("file"), gen.MethodUpdate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				//return generate(c.String("file"), gen.MethodUpdate)
 			},
 		},
 		{
 			Name:  "get",
 			Usage: "Generate code to get a resource object",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:     "file, f",
-					Usage:    "K8s resource spec yaml file",
-					Required: true,
-				},
-			},
+			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodGet)
+				return generate(c.String("file"), gen.MethodGet, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
 			Name:  "delete",
 			Usage: "Generate code for deleting a resource",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:     "file, f",
-					Usage:    "K8s resource spec yaml file",
-					Required: true,
-				},
-			},
+			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodDelete)
+				return generate(c.String("file"), gen.MethodDelete, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 			},
 		},
 	}
@@ -82,12 +62,13 @@ func main() {
 	}
 }
 
-func generate(path string, method gen.KubeMethod) error {
+func generate(path string, method gen.KubeMethod, isCR, isNamespaced bool, client, api string) error {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return cli.NewExitError(fmt.Errorf("error: the path %s does not exist", path), 1)
 	}
-	gen := gen.New(b, method)
+	//gen := gen.New(b, method, true, true, "k8s.io/sample-controller/pkg/generated/clientset/versioned", "k8s.io/sample-controller/pkg/apis/samplecontroller")
+	gen := gen.New(b, method, isCR, isNamespaced, client, api)
 	code, err := gen.Generate()
 	if err != nil {
 		return cli.NewExitError(err, 1)
