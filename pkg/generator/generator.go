@@ -94,7 +94,7 @@ func (c *CodeGen) Generate() (code string, err error) {
 
 	if c.method != MethodDelete && c.method != MethodGet {
 		var imports string
-		i := importer.New(c.kind, c.group, c.version, c.kubeObject)
+		i := importer.New(c.kind, c.group, c.version, c.kubeObject, c.client)
 		imports, c.kubeObject = i.FindImports()
 		c.imports += imports
 		c.addPtrMethods()

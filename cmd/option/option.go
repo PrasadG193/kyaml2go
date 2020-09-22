@@ -3,11 +3,10 @@ package option
 import "github.com/urfave/cli"
 
 var Flags = []cli.Flag{
-	cli.StringFlag{
-		Name:     "file, f",
-		Usage:    "K8s resource spec yaml file",
-		Required: true,
-	},
+	//	cli.StringFlag{
+	//		Name:  "file, f",
+	//		Usage: "K8s resource spec yaml file",
+	//	},
 	cli.BoolFlag{
 		Name:     "cr",
 		Usage:    "is Custom resource",
@@ -29,8 +28,8 @@ var Flags = []cli.Flag{
 		Required: false,
 	},
 	cli.StringFlag{
-		Name:     "schema, s",
-		Usage:    "Custom resource schema package name",
+		Name:     "scheme, s",
+		Usage:    "Custom resource scheme package name",
 		Required: false,
 	},
 }

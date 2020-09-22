@@ -1,9 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/urfave/cli"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 	"os"
 
@@ -25,7 +26,7 @@ func main() {
 			Usage: "Generate code for creating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodCreate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(gen.MethodCreate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
@@ -33,7 +34,7 @@ func main() {
 			Usage: "Generate code for updating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodUpdate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(gen.MethodUpdate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 				//return generate(c.String("file"), gen.MethodUpdate)
 			},
 		},
@@ -42,7 +43,7 @@ func main() {
 			Usage: "Generate code to get a resource object",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodGet, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(gen.MethodGet, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
@@ -50,7 +51,7 @@ func main() {
 			Usage: "Generate code for deleting a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(c.String("file"), gen.MethodDelete, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(gen.MethodDelete, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
 			},
 		},
 	}
@@ -62,13 +63,24 @@ func main() {
 	}
 }
 
-func generate(path string, method gen.KubeMethod, isCR, isNamespaced bool, client, api string) error {
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return cli.NewExitError(fmt.Errorf("error: the path %s does not exist", path), 1)
+func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string) error {
+	// Read input from the console
+	var data string
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		data += scanner.Text() + "\n"
 	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal("Error while reading input:", err)
+	}
+
+	//b, err := ioutil.ReadFile(path)
+	//if err != nil {
+	//	return cli.NewExitError(fmt.Errorf("error: the path %s does not exist", path), 1)
+	//}
 	//gen := gen.New(b, method, true, true, "k8s.io/sample-controller/pkg/generated/clientset/versioned", "k8s.io/sample-controller/pkg/apis/samplecontroller")
-	gen := gen.New(b, method, isCR, isNamespaced, client, api)
+	fmt.Printf("DATA::\n%s\n", data)
+	gen := gen.New([]byte(data), method, isCR, isNamespaced, client, api)
 	code, err := gen.Generate()
 	if err != nil {
 		return cli.NewExitError(err, 1)
