@@ -23,7 +23,7 @@ const (
 	// MethodCreate to create K8s resource
 	MethodCreate = "create"
 	// MethodGet to get K8s resource
-	MethodGet    = "get"
+	MethodGet = "get"
 	// MethodUpdate to update K8s resource
 	MethodUpdate = "update"
 	// MethodDelete to delete K8s resource
@@ -77,8 +77,10 @@ func (c *CodeGen) Generate() (code string, err error) {
 	c.cleanupObject()
 
 	if c.method != MethodDelete && c.method != MethodGet {
+		var imports string
 		i := importer.New(c.kind, c.group, c.version, c.kubeObject)
-		c.imports, c.kubeObject = i.FindImports()
+		imports, c.kubeObject = i.FindImports()
+		c.imports += imports
 		c.addPtrMethods()
 	}
 
@@ -152,7 +154,7 @@ func (c *CodeGen) addKubeClient() {
         if err != nil {
                 panic(err)
         }
-        clientset, err := kubernetes.NewForConfig(config)
+        client, err := clientset.NewForConfig(config)
         if err != nil {
                 panic(err)
         }
@@ -170,9 +172,9 @@ func (c *CodeGen) addKubeClient() {
 		kindPlurals = fmt.Sprintf("%sies", strings.TrimRight(c.kind, "y"))
 	}
 
-	method := fmt.Sprintf("kubeclient := clientset.%s%s().%s()", strings.Split(c.group, ".")[0], c.version, kindPlurals)
+	method := fmt.Sprintf("kubeclient := client.%s%s().%s()", strings.Split(c.group, ".")[0], c.version, kindPlurals)
 	if _, ok := kube.KindNamespaced[c.kind]; ok {
-		method = fmt.Sprintf("kubeclient := clientset.%s%s().%s(\"%s\")", strings.Split(c.group, ".")[0], c.version, kindPlurals, c.namespace)
+		method = fmt.Sprintf("kubeclient := client.%s%s().%s(\"%s\")", strings.Split(c.group, ".")[0], c.version, kindPlurals, c.namespace)
 	}
 	c.kubeClient += method
 }
@@ -180,31 +182,23 @@ func (c *CodeGen) addKubeClient() {
 // addKubeManage add methods to manage job resource
 func (c *CodeGen) addKubeManage() {
 	var method string
+
+	// Add imports
+	for _, i := range importer.CommonImports {
+		c.imports += fmt.Sprintf("\"%s\"\n", i)
+	}
+	clientPkg := "k8s.io/client-go/kubernetes"
+	c.imports += fmt.Sprintf("clientset \"%s\"\n", clientPkg)
+	c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
+
+	methodStr := strings.Title(c.method.String())
 	switch c.method {
 	case MethodDelete:
-		// Add imports
-		for _, i := range importer.CommonImports {
-			c.imports += fmt.Sprintf("\"%s\"\n", i)
-		}
-		c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
-
-		param := fmt.Sprintf(`"%s", &metav1.DeleteOptions{}`, c.name)
-		method = fmt.Sprintf("err = kubeclient.%s(%s)", strings.Title(c.method.String()), param)
-
+		method = fmt.Sprintf("err = kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
 	case MethodGet:
-		// Add imports
-		for _, i := range importer.CommonImports {
-			c.imports += fmt.Sprintf("\"%s\"\n", i)
-		}
-		c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
-
-		param := fmt.Sprintf(`"%s", metav1.GetOptions{}`, c.name)
-		method = fmt.Sprintf("found, err := kubeclient.%s(%s)\n", strings.Title(c.method.String()), param)
-		// Add log
-		method += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
-
+		method = fmt.Sprintf("found, err := kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
 	default:
-		method = fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(c.method.String()))
+		method = fmt.Sprintf("_, err = kubeclient.%s(context.TODO(), object, metav1.%sOptions{})", methodStr, methodStr)
 	}
 
 	c.kubeManage = fmt.Sprintf(`%s
@@ -214,8 +208,11 @@ func (c *CodeGen) addKubeManage() {
 	`, method)
 
 	if c.method != MethodGet {
-		c.kubeManage += fmt.Sprintf(`fmt.Println("%s %sd successfully!")`, c.kind, strings.Title(c.method.String()))
+		c.kubeManage += fmt.Sprintf(`fmt.Println("%s %sd successfully!")`, c.kind, methodStr)
+		return
 	}
+
+	c.kubeManage += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
 }
 
 // prettyCode generates final go code well indented by gofmt
