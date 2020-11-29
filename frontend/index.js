@@ -1,5 +1,5 @@
 //const URL = "http://localhost:8080/v1/convert"
-let BASE_URL = "https://kyaml2go-oymillvkxq-uc.a.run.app/kyaml2go?method="
+let BASE_URL = "https://kyaml2go-oymillvkxq-uc.a.run.app/v1/convert?method="
 
 let go = document.getElementById("goGenerator")
 let codecopied = document.getElementById("codecopied")
@@ -61,11 +61,11 @@ document.getElementById("convert").addEventListener('click', ()=>{
     query =""
     if (isCRChecked()){
       CRDetailValid = true
-      schema = getValue("schema")
+      scheme = getValue("scheme")
       apis = getValue("apis")
       clients  = getValue("client")
 
-      query = "&cr=true&schema="+schema+"&apis="+apis+"&client="+clients
+      query = "&cr=true&scheme="+scheme+"&apis="+apis+"&client="+clients
     }
 
     if (CRDetailValid){
