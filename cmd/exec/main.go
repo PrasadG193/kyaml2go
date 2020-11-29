@@ -64,7 +64,7 @@ func main() {
 }
 
 func execute(cmd string, args []string) (string, error) {
-	log.Println("command: ", cmd, args)
+	//log.Println("command: ", cmd, args)
 	c := exec.Command(cmd, args...)
 	out, err := c.CombinedOutput()
 	return string(out), err
