@@ -27,7 +27,7 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-    
+
       gtag('config', 'UA-150234067-2');
     </script>
 
@@ -47,7 +47,7 @@
           <p class="secondaryData">
             Kubernetes client-go code generator for resource YAMLs
           </p>
-        </div>  
+        </div>
       </div>
       <div class="sidepanel">
         <div class="sidebutton">
@@ -62,6 +62,26 @@
 
       </span>
     </div>
+    <div id="cr_params">
+        <div id="cr_ip">
+          <table>
+            <tr>
+                <td colspan="3">Please enter details here</td>
+            </tr>
+            <tr>
+              <td>
+                <input type="text" id="schema" placeholder="schema">
+              </td>
+              <td>
+                <input type="text" id="apis" placeholder="apis">
+              </td>
+              <td>
+                <input type="text" id="client" placeholder="client">
+              </td>
+            </tr>
+            </table>
+        </div>
+    </div>
     <div class="container">
       <!-- Example row of columns -->
       <div class="position-relative row d-flex justify-content-between mt-4" style="height:65%;">
@@ -71,7 +91,12 @@
           <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearYaml" />
         </div>
         <div class="button_yaml" id="dd_wrapper">
-          
+          <div style="text-align: center;">
+          Is CR?
+          <br>
+          <input type="checkbox" id="cr_check" name="cr_check" value="Is CR?">
+          </div>
+          <hr>
           <select id="selectaction">
             <option value="create">Create</option>
             <option value="update">Update</option>
@@ -86,7 +111,7 @@
         <i class="glyphicon glyphicon-calendar"></i>
         <div class="position-relative form-group apply_space" style="height:85%;">
             <div>
-              <label for="goGenerator">GO</label> 
+              <label for="goGenerator">GO</label>
               <span id="codecopied">code copied</span>
               <i class="fa fa-copy flr" id="copybutton" title="Copy Code""></i>
             </div>
