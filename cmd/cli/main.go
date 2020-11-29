@@ -79,7 +79,7 @@ func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string
 	//	return cli.NewExitError(fmt.Errorf("error: the path %s does not exist", path), 1)
 	//}
 	//gen := gen.New(b, method, true, true, "k8s.io/sample-controller/pkg/generated/clientset/versioned", "k8s.io/sample-controller/pkg/apis/samplecontroller")
-	fmt.Printf("DATA::\n%s\n", data)
+	//fmt.Printf("DATA::\n%s\n", data)
 	gen := gen.New([]byte(data), method, isCR, isNamespaced, client, api)
 	code, err := gen.Generate()
 	if err != nil {

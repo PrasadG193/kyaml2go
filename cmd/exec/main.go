@@ -64,7 +64,7 @@ func main() {
 }
 
 func execute(cmd string, args []string) (string, error) {
-	fmt.Printf("command: %s %+v\n", cmd, args)
+	log.Println("command: ", cmd, args)
 	c := exec.Command(cmd, args...)
 	out, err := c.CombinedOutput()
 	return string(out), err
@@ -97,7 +97,7 @@ func buildAndRun(method string, isCR, isNamespaced bool, client, scheme, api str
 		log.Fatal("Error while reading input:", err)
 	}
 
-	fmt.Printf("DATA EXEC::\n%s\n", data)
+	//fmt.Printf("DATA EXEC::\n%s\n", data)
 	// hack
 	//path := "/tmp/manifest.yaml"
 	//file, err := os.OpenFile(path, os.O_RDWR, 0644)
