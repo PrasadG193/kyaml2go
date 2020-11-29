@@ -7,7 +7,7 @@ html, body, main {
 }
 
 .button_yaml{
-    height: 50px;     
+    height: 50px;
     top: 50%;
     margin: auto;
     left: 0;
@@ -30,9 +30,9 @@ html, body, main {
     50%  {border-color: #F012BE;}
     75%  {border-color: #B10DC9;}
     100% {border-color: #001f3f;}
-    
+
   }
-  
+
   /* Standard syntax */
   @keyframes example {
     0%   {border-color: #FF851B;}
@@ -159,4 +159,17 @@ button:focus{
 .credits {
   color: gray;
   text-align: center;
+}
+#cr_params{
+  display: none;
+}
+#cr_ip{
+  width: 646px;
+  margin: auto;
+}
+#cr_ip input{
+  border: none;
+  border: 1px solid gray;
+  padding: 5px;
+  border-radius: 4px;
 }

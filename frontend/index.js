@@ -4,9 +4,11 @@ let BASE_URL = "https://us-central1-yaml2go.cloudfunctions.net/kyaml2go?method="
 let go = document.getElementById("goGenerator")
 let codecopied = document.getElementById("codecopied")
 let editor = ""
+let CRDetailValid = true
 
-window.generatorCall=function (action){
-  URL = formGooleFuncURL(action)
+window.generatorCall=function (action, query){
+  URL = formGooleFuncURL(action)+query
+
   let yamlData  = document.getElementById("codegen").value
   document.getElementById('codegen').style.border = "1px solid #ced4da"
   yamlData = editor.getValue()
@@ -14,9 +16,9 @@ window.generatorCall=function (action){
     'url' : `${URL}`,
     'type' : 'POST',
     'data' : yamlData,
-    'success' : function(data) { 
-        document.getElementById("error").style.display="none" 
-        document.getElementById("err-span").innerHTML="";     
+    'success' : function(data) {
+        document.getElementById("error").style.display="none"
+        document.getElementById("err-span").innerHTML="";
         go.setValue(data)
     },
     'error' : function(jqXHR, request,error)
@@ -37,13 +39,41 @@ function formGooleFuncURL(action){
   return BASE_URL+action
 }
 
+// checks if cr checkbox is checked
+function isCRChecked(){
+  return document.getElementById("cr_check").checked
+}
+
+function getValue(id){
+  v = document.getElementById(id).value
+  if (v.length ==0){
+    CRDetailValid = false
+  }
+  return v
+}
+
 //Convert
 dropDown = document.getElementById("selectaction")
 document.getElementById("convert").addEventListener('click', ()=>{
   action = dropDown.value
   if (action != "select"){
     hideError()
-    generatorCall(action)
+    query =""
+    if (isCRChecked()){
+      CRDetailValid = true
+      schema = getValue("schema")
+      apis = getValue("apis")
+      clients  = getValue("client")
+
+      query = "&cr=true&schema="+schema+"&apis="+apis+"&client="+clients
+    }
+
+    if (CRDetailValid){
+      hideError()
+      generatorCall(action, query)
+    } else{
+      displayError("Please enter correct CR details")
+    }
   }
   else{
     displayError("Please select the method.")
@@ -213,4 +243,13 @@ document.getElementById("copybutton").addEventListener("click", function (){
   window.setTimeout(function (){
     codecopied.style.display="none"
   }, 500)
+});
+
+document.getElementById("cr_check").addEventListener("change", function (){
+  if (isCRChecked()){
+    document.getElementById("cr_params").style.display = "block"
+  } else {
+    document.getElementById("cr_params").style.display = "none"
+  }
+
 });
