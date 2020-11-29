@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 
 	//"github.com/PrasadG193/kyaml2go/pkg/generator"
 	"github.com/julienschmidt/httprouter"
@@ -30,27 +31,27 @@ func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		return
 	}
 
-	file, err := os.OpenFile(path, os.O_RDWR, 0644)
-	if err != nil {
-		// create file if not exists
-		if os.IsNotExist(err) {
-			file, err = os.Create(path)
-			if err != nil {
-				log.Println(err)
-				http.Error(w, fmt.Sprintf("Bad Request. Error: %s", err.Error()), http.StatusBadRequest)
-				return
-			}
-		}
-		return
-	}
-	defer file.Close()
-	//defer os.Remove(path)
-	_, err = file.WriteString(string(body))
-	if err != nil {
-		log.Println(err)
-		http.Error(w, fmt.Sprintf("Bad Request. Error: %s", err.Error()), http.StatusBadRequest)
-		return
-	}
+	//file, err := os.OpenFile(path, os.O_RDWR, 0644)
+	//if err != nil {
+	//	// create file if not exists
+	//	if os.IsNotExist(err) {
+	//		file, err = os.Create(path)
+	//		if err != nil {
+	//			log.Println(err)
+	//			http.Error(w, fmt.Sprintf("Bad Request. Error: %s", err.Error()), http.StatusBadRequest)
+	//			return
+	//		}
+	//	}
+	//	return
+	//}
+	//defer file.Close()
+	////defer os.Remove(path)
+	//_, err = file.WriteString(string(body))
+	//if err != nil {
+	//	log.Println(err)
+	//	http.Error(w, fmt.Sprintf("Bad Request. Error: %s", err.Error()), http.StatusBadRequest)
+	//	return
+	//}
 
 	urlPQ, _ := url.ParseQuery(r.URL.RawQuery)
 	method := urlPQ.Get("method")
@@ -58,12 +59,12 @@ func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	if method != "" {
 		method = "create"
 	}
-	args := []string{method, "-f", path}
+	args := []string{method}
 	if cr != "" {
-		args = append(args, []string{"--cr", "--apis", urlPQ.Get("apis"), "--client", urlPQ.Get("client"), "--schema", urlPQ.Get("schema")}...)
+		args = append(args, []string{"--cr", "--apis", urlPQ.Get("apis"), "--client", urlPQ.Get("client"), "--scheme", urlPQ.Get("scheme")}...)
 	}
 
-	code, err := execute(fmt.Sprintf("%s/bin/kyaml2go", os.Getenv("GOPATH")), args)
+	code, err := execute(fmt.Sprintf("%s/bin/kyaml2go", os.Getenv("GOPATH")), args, string(body))
 	if err != nil {
 		log.Printf("Failed to generate code. %s %v", code, err)
 		http.Error(w, fmt.Sprintf("Bad Request. Error: %s %s", code, err.Error()), http.StatusBadRequest)
@@ -73,9 +74,10 @@ func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	io.WriteString(w, code)
 }
 
-func execute(cmd string, args []string) (string, error) {
+func execute(cmd string, args []string, data string) (string, error) {
 	fmt.Println(cmd, args)
 	c := exec.Command(cmd, args...)
+	c.Stdin = strings.NewReader(data)
 	out, err := c.CombinedOutput()
 	return string(out), err
 }

@@ -14,9 +14,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy source
-COPY . .
+COPY pkg ./pkg
+COPY cmd ./cmd
+COPY Makefile ./
 
 # Build binary
 RUN make
 
-ENTRYPOINT ["sh", "-c"]
+ENTRYPOINT ["kyaml2go_serve"]
