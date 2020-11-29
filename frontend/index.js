@@ -1,5 +1,5 @@
 //const URL = "http://localhost:8080/v1/convert"
-let BASE_URL = "https://us-central1-yaml2go.cloudfunctions.net/kyaml2go?method="
+let BASE_URL = "https://kyaml2go-oymillvkxq-uc.a.run.app/kyaml2go?method="
 
 let go = document.getElementById("goGenerator")
 let codecopied = document.getElementById("codecopied")
