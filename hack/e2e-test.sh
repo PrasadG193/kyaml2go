@@ -5,18 +5,18 @@ set -o nounset
 
 make build
 
-for spec in ./testdata1/*.yaml; do
+for spec in ./testdata/*.yaml; do
   echo "testing $spec"
-  kyaml2go create -f $spec > testdata1/result.go
-  go run testdata1/result.go
-  kyaml2go get -f $spec > testdata1/result.go
-  go run testdata1/result.go
+  kyaml2go create -f $spec > testdata/result.go
+  go run testdata/result.go
+  kyaml2go get -f $spec > testdata/result.go
+  go run testdata/result.go
   echo
-  kyaml2go delete -f $spec > testdata1/result.go
-  go run testdata1/result.go
+  kyaml2go delete -f $spec > testdata/result.go
+  go run testdata/result.go
   echo "---------------------"
 done
 
-rm testdata1/result.go
+rm testdata/result.go
 
 echo "PASS"
