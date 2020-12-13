@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/urfave/cli"
-	//"io/ioutil"
 	"log"
 	"os"
 
@@ -35,7 +34,6 @@ func main() {
 			Flags: flags,
 			Action: func(c *cli.Context) error {
 				return generate(gen.MethodUpdate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
-				//return generate(c.String("file"), gen.MethodUpdate)
 			},
 		},
 		{
@@ -74,12 +72,6 @@ func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string
 		log.Fatal("Error while reading input:", err)
 	}
 
-	//b, err := ioutil.ReadFile(path)
-	//if err != nil {
-	//	return cli.NewExitError(fmt.Errorf("error: the path %s does not exist", path), 1)
-	//}
-	//gen := gen.New(b, method, true, true, "k8s.io/sample-controller/pkg/generated/clientset/versioned", "k8s.io/sample-controller/pkg/apis/samplecontroller")
-	//fmt.Printf("DATA::\n%s\n", data)
 	gen := gen.New([]byte(data), method, isCR, isNamespaced, client, api)
 	code, err := gen.Generate()
 	if err != nil {
