@@ -11,11 +11,8 @@ import (
 	"os/exec"
 	"strings"
 
-	//"github.com/PrasadG193/kyaml2go/pkg/generator"
 	"github.com/julienschmidt/httprouter"
 )
-
-const path = "./manifest.yaml"
 
 // HandleConvert parses http request to get K8s resource specs and return generated Go code
 // for valid resource specs
@@ -31,32 +28,10 @@ func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		return
 	}
 
-	//file, err := os.OpenFile(path, os.O_RDWR, 0644)
-	//if err != nil {
-	//	// create file if not exists
-	//	if os.IsNotExist(err) {
-	//		file, err = os.Create(path)
-	//		if err != nil {
-	//			log.Println(err)
-	//			http.Error(w, fmt.Sprintf("Bad Request. Error: %s", err.Error()), http.StatusBadRequest)
-	//			return
-	//		}
-	//	}
-	//	return
-	//}
-	//defer file.Close()
-	////defer os.Remove(path)
-	//_, err = file.WriteString(string(body))
-	//if err != nil {
-	//	log.Println(err)
-	//	http.Error(w, fmt.Sprintf("Bad Request. Error: %s", err.Error()), http.StatusBadRequest)
-	//	return
-	//}
-
 	urlPQ, _ := url.ParseQuery(r.URL.RawQuery)
 	method := urlPQ.Get("method")
 	cr := urlPQ.Get("cr")
-	if method != "" {
+	if method == "" {
 		method = "create"
 	}
 	args := []string{method}
