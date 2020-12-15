@@ -54,6 +54,7 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/urfave/cli v1.22.1
 	k8s.io/api v0.18.4
+	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v0.18.4
 	k8s.io/kubernetes v1.18.4 // indirect
