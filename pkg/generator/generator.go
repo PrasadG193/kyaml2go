@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
-	//crScheme "k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme"
 
 	"github.com/PrasadG193/kyaml2go/pkg/importer"
 	"github.com/PrasadG193/kyaml2go/pkg/kube"

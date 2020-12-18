@@ -3,10 +3,6 @@ package option
 import "github.com/urfave/cli"
 
 var Flags = []cli.Flag{
-	//	cli.StringFlag{
-	//		Name:  "file, f",
-	//		Usage: "K8s resource spec yaml file",
-	//	},
 	cli.BoolFlag{
 		Name:     "cr",
 		Usage:    "is Custom resource",
