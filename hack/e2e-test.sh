@@ -31,7 +31,6 @@ for spec in ./testdata/crds/*.yaml; do
 done
 
 # Test CRs
-# Create CRDs
 # Test Foo CR
 spec="./testdata/crs/foo.yaml"
 echo "testing $spec"
@@ -42,6 +41,16 @@ go run testdata/result.go
 echo
 kyaml2go delete --cr --scheme "k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme" --apis "k8s.io/sample-controller/pkg/apis/samplecontroller" --client "k8s.io/sample-controller/pkg/generated/clientset/versioned" < $spec > testdata/result.go
 go run testdata/result.go
+
+# Test Backup CR
+spec="./testdata/crs/velero-backup.yaml"
+echo "testing $spec"
+kyaml2go create --cr --scheme "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned/scheme" --apis "github.com/vmware-tanzu/velero/pkg/apis/velero" --client "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned" < $spec > testdata/result.go
+go run testdata/result.go
+kyaml2go get --cr --scheme "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned/scheme" --apis "github.com/vmware-tanzu/velero/pkg/apis/velero" --client "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned" < $spec > testdata/result.go
+go run testdata/result.go
+echo
+kyaml2go delete --cr --scheme "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned/scheme" --apis "github.com/vmware-tanzu/velero/pkg/apis/velero" --client "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned" < $spec > testdata/result.go
 echo "---------------------"
 
 # Delete CRDs

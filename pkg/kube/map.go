@@ -97,6 +97,7 @@ var KindAPIMap = map[string]string{
 	"TypeMeta":                       "metav1",
 	"ObjectMeta":                     "metav1",
 	"LabelSelector":                  "metav1",
+	"Duration":                       "metav1",
 }
 
 // KindNamespaced keeps maps of Namespaced K8s resources
