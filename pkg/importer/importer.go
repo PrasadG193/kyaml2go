@@ -20,7 +20,7 @@ var CommonImports = []string{
 	"k8s.io/client-go/util/homedir",
 }
 
-const packageFormat = `(?m)[*&\]\s]([A-Za-z0-9]*?)\.?([A-Za-z]+)[{|()]`
+const packageFormat = `(?m)[*&\]\s]([A-Za-z0-9]*?)\.?([A-Za-z0-9]+)[{|()]`
 
 // ImportManager holds resource Kind, Group, Versions to figure out imports
 type ImportManager struct {
