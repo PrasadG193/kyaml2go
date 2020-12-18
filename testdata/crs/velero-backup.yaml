@@ -1,0 +1,9 @@
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: nginx-backup
+  namespace: velero
+spec:
+  includedNamespaces:
+  - nginx-example
+  ttl: 720h0m0s
