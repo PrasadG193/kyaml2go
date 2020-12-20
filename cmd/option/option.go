@@ -8,11 +8,6 @@ var Flags = []cli.Flag{
 		Usage:    "is Custom resource",
 		Required: false,
 	},
-	cli.BoolFlag{
-		Name:     "namespaced",
-		Usage:    "is Custom resource namespaced",
-		Required: false,
-	},
 	cli.StringFlag{
 		Name:     "apis",
 		Usage:    "Custom resource api def package",
