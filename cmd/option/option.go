@@ -5,17 +5,17 @@ import "github.com/urfave/cli"
 var Flags = []cli.Flag{
 	cli.BoolFlag{
 		Name:     "cr",
-		Usage:    "is Custom resource",
+		Usage:    "Resource is a Custom resource",
 		Required: false,
 	},
 	cli.StringFlag{
 		Name:     "apis",
-		Usage:    "Custom resource api def package",
+		Usage:    "Custom resource api def package (without version)",
 		Required: false,
 	},
 	cli.StringFlag{
 		Name:     "client, c",
-		Usage:    "Custom resource client package name",
+		Usage:    "Custom resource typed client package name",
 		Required: false,
 	},
 	cli.StringFlag{
