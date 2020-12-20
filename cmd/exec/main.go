@@ -25,7 +25,7 @@ func main() {
 			Usage: "Generate code for creating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("create", c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("create", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func main() {
 			Usage: "Generate code for updating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("update", c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("update", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func main() {
 			Usage: "Generate code to get a resource object",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("get", c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("get", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
 			},
 		},
 		{
@@ -49,7 +49,7 @@ func main() {
 			Usage: "Generate code for deleting a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("delete", c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("delete", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
 			},
 		},
 	}
@@ -71,7 +71,7 @@ func escape(p string) string {
 	return strings.ReplaceAll(p, "/", "\\/")
 }
 
-func buildAndRun(method string, isCR, isNamespaced bool, client, scheme, api string) error {
+func buildAndRun(method string, isCR bool, client, scheme, api string) error {
 	// Rebuild CLI with provided packages
 	if isCR {
 		// Generate register.go to register scheme as per the provided packages
