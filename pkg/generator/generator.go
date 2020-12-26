@@ -237,13 +237,6 @@ func (c *CodeGen) addKubeManage() {
 	c.kubeManage += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
 }
 
-func prepareMethod(isCR bool, method KubeMethod) string {
-	if isCR {
-		return fmt.Sprintf("_, err = kubeclient.%s(context.TODO(), object, metav1.%sOptions{})", strings.Title(method.String()))
-	}
-	return fmt.Sprintf("_, err = kubeclient.%s(object)", strings.Title(method.String()))
-}
-
 // prettyCode generates final go code well indented by gofmt
 func (c *CodeGen) prettyCode() (code string, err error) {
 	kubeobject := fmt.Sprintf(`// Create resource object
