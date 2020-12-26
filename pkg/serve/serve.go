@@ -10,13 +10,24 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/julienschmidt/httprouter"
 )
 
+// RequestHandler implement http request handlers
+type RequestHandler struct {
+	mutex *sync.Mutex
+}
+
+// NewHandler returns new instance of RequestHandler
+func NewHandler() *RequestHandler {
+	return &RequestHandler{mutex: &sync.Mutex{}}
+}
+
 // HandleConvert parses http request to get K8s resource specs and return generated Go code
 // for valid resource specs
-func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (rh *RequestHandler) HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Enable CORS
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -39,12 +50,14 @@ func HandleConvert(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		args = append(args, []string{"--cr", "--apis", urlPQ.Get("apis"), "--client", urlPQ.Get("client"), "--scheme", urlPQ.Get("scheme")}...)
 	}
 
+	rh.mutex.Lock()
 	code, err := execute(fmt.Sprintf("%s/bin/kyaml2go", os.Getenv("GOPATH")), args, string(body))
 	if err != nil {
 		log.Printf("Failed to generate code. %s %v", code, err)
 		http.Error(w, fmt.Sprintf("Bad Request. Error: %s %s", code, err.Error()), http.StatusBadRequest)
 		return
 	}
+	rh.mutex.Unlock()
 
 	io.WriteString(w, code)
 }
