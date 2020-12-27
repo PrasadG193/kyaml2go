@@ -69,6 +69,7 @@ document.getElementById("convert").addEventListener('click', ()=>{
     }
 
     if (CRDetailValid){
+      go.setValue("Generating...")
       hideError()
       generatorCall(action, query)
     } else{
