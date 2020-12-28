@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/juju/fslock"
 
 	"github.com/PrasadG193/kyaml2go/cmd/option"
 )
@@ -72,18 +75,31 @@ func escape(p string) string {
 }
 
 func buildAndRun(method string, isCR bool, client, scheme, api string) error {
+	k2gcli := fmt.Sprintf("%s/bin/kyaml2go_cli", os.Getenv("GOPATH"))
 	// Rebuild CLI with provided packages
 	if isCR {
+		tmpfile, err := ioutil.TempFile("/tmp", "kyaml2go_cli")
+		if err != nil {
+			return err
+		}
+		k2gcli = tmpfile.Name()
+		defer os.Remove(k2gcli)
+		// Add lock on shared file with requests
+		fileLock := fslock.New("./pkg/generator/register.go")
+		if err := fileLock.Lock(); err != nil {
+			return err
+		}
 		// Generate register.go to register scheme as per the provided packages
 		if out, err := execute("sh", []string{"-c", fmt.Sprintf("sed 's/PACKAGE/%s/g' ./pkg/generator/register_template.txt > ./pkg/generator/register.go", escape(scheme))}); err != nil {
 			log.Printf("Failed to generate register.go %s. %v", out, err)
 			return err
 		}
 
-		if out, err := execute("sh", []string{"-c", "make cli"}); err != nil {
+		if out, err := execute("sh", []string{"-c", fmt.Sprintf("go build -o %s ./cmd/cli", k2gcli)}); err != nil {
 			log.Printf("Failed build kyaml2go %s. %v", out, err)
 			return err
 		}
+		defer fileLock.Unlock()
 	}
 
 	// Read input from the console
@@ -98,9 +114,7 @@ func buildAndRun(method string, isCR bool, client, scheme, api string) error {
 
 	// Generate code
 	args := os.Args[1:]
-	kcli := fmt.Sprintf("%s/bin/kyaml2go_cli", os.Getenv("GOPATH"))
-	c := exec.Command(kcli, args...)
-
+	c := exec.Command(k2gcli, args...)
 	c.Stdin = strings.NewReader(data)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
