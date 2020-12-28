@@ -10,19 +10,17 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 // RequestHandler implement http request handlers
 type RequestHandler struct {
-	mutex *sync.Mutex
 }
 
 // NewHandler returns new instance of RequestHandler
 func NewHandler() *RequestHandler {
-	return &RequestHandler{mutex: &sync.Mutex{}}
+	return &RequestHandler{}
 }
 
 // HandleConvert parses http request to get K8s resource specs and return generated Go code
@@ -50,14 +48,13 @@ func (rh *RequestHandler) HandleConvert(w http.ResponseWriter, r *http.Request, 
 		args = append(args, []string{"--cr", "--apis", urlPQ.Get("apis"), "--client", urlPQ.Get("client"), "--scheme", urlPQ.Get("scheme")}...)
 	}
 
-	rh.mutex.Lock()
+	log.Printf("Incoming request. %s/bin/kyaml2go %v %s", os.Getenv("GOPATH"), args, string(body))
 	code, err := execute(fmt.Sprintf("%s/bin/kyaml2go", os.Getenv("GOPATH")), args, string(body))
 	if err != nil {
 		log.Printf("Failed to generate code. %s %v", code, err)
 		http.Error(w, fmt.Sprintf("Bad Request. Error: %s %s", code, err.Error()), http.StatusBadRequest)
 		return
 	}
-	rh.mutex.Unlock()
 
 	io.WriteString(w, code)
 }
