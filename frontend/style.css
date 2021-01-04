@@ -144,26 +144,16 @@ button:focus{
   color: red;
 }
 
-#view-source{
+.sidepanel{
+  display:flex;
+  justify-content:space-around;
+}
+
+.sidebutton{
+  position: relative;
   margin-top: 40px;
-  width: 60%;
+  margin-left: 10px;
   text-align: right;
-  margin-right: 100px;
-}
-
-#view-source-link{
-  border: 1px solid steelblue;
-  padding: 10px;
-  color: steelblue;
-  
-}
-
-#view-source a{
-  text-decoration: none !important;
-}
-
-#view-source-link:hover{
-  background-color: white;
 }
 
 .credits {
