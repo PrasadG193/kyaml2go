@@ -6,11 +6,22 @@ let codecopied = document.getElementById("codecopied")
 let editor = ""
 let CRDetailValid = true
 
+// Codemirror modes
+editor = CodeMirror.fromTextArea(document.getElementById("yamlspecs"), {
+  lineNumbers : true,
+  mode: "text/x-yaml"
+});
+
+go = CodeMirror.fromTextArea(document.getElementById("goGenerator"), {
+  lineNumbers : true,
+  mode: "text/x-go"
+});
+
 window.generatorCall=function (action, query){
   URL = formGooleFuncURL(action)+query
 
-  let yamlData  = document.getElementById("codegen").value
-  document.getElementById('codegen').style.border = "1px solid #ced4da"
+  let yamlData  = document.getElementById("yamlspecs").value
+  document.getElementById('yamlspecs').style.border = "1px solid #ced4da"
   yamlData = editor.getValue()
   $.ajax({
     'url' : `${URL}`,
@@ -21,12 +32,17 @@ window.generatorCall=function (action, query){
         document.getElementById("err-span").innerHTML="";
         go.setValue(data)
     },
-    'error' : function(jqXHR, request,error)
+    'error' : function(jqXHR, request, error)
     {
-      document.getElementById('codegen').style.border = "1px solid red"
+      document.getElementById('yamlspecs').style.border = "1px solid red"
       if (jqXHR.status == 400) {
-        // empty out the second textarea
-        displayError('Invalid Kubernetes resource spec. Please check the spec and try again.')
+        if (isCRChecked()){
+          go.setOption("lineWrapping", true)
+          displayError('Invalid Kubernetes resource spec or package names. Please check the spec and try again.')
+          go.setValue(jqXHR.responseText)
+        } else {
+          displayError('Invalid Kubernetes resource spec. Please check the spec and try again.')
+        }
       } else {
         displayError('Something went wrong! Please report this to https://github.com/PrasadG193/kyaml2go/issues')
       }
@@ -64,7 +80,6 @@ document.getElementById("convert").addEventListener('click', ()=>{
       scheme = getValue("scheme").trim()
       apis = getValue("apis").trim()
       clients  = getValue("client").trim()
-
       query = "&cr=true&scheme="+scheme+"&apis="+apis+"&client="+clients
     }
 
@@ -91,21 +106,41 @@ document.getElementById('clearGo').addEventListener('click',()=>{
   go.setValue('')
 })
 
+// Set sample specs and code
+$(document).ready(setDeploymentSample());
 
-$(document).ready(function(){
-  //code here...
-  var input = $(".codemirror-textarea")[0];
-  var output = $(".codemirror-textarea")[1];
-  editor = CodeMirror.fromTextArea(input, {
-    mode: "text/x-yaml",
-    lineNumbers : true
-  });
+function displayError(err){
+  document.getElementById("err-span").innerHTML=err;
+  document.getElementById("error").style.display="block"
+}
 
-  go = CodeMirror.fromTextArea(output, {
-    lineNumbers : true,
-    mode: "text/x-go"
-  });
+function hideError(){
+  document.getElementById("err-span").innerHTML="";
+  document.getElementById("error").style.display="none"
+  go.setOption("lineWrapping", false)
+}
 
+document.getElementById("copybutton").addEventListener("click", function (){
+  // will have to check browser compatibility for this
+  navigator.clipboard.writeText(go.getValue())
+  codecopied.style.display="inline"
+  window.setTimeout(function (){
+    codecopied.style.display="none"
+  }, 500)
+});
+
+document.getElementById("cr_check").addEventListener("change", function (){
+  hideError()
+  if (isCRChecked()){
+    document.getElementById("cr_params").style.display = "block"
+    setCRSample()
+  } else {
+    document.getElementById("cr_params").style.display = "none"
+    setDeploymentSample()
+  }
+});
+
+function setDeploymentSample(){
   // Add sample input
   editor.setValue(`# Paste your Kubernetes yaml spec here...
 apiVersion: apps/v1
@@ -224,32 +259,9 @@ func ptrint32(p int32) *int32 {
 	return &p
 }
   `)
-});
-
-function displayError(err){
-  document.getElementById("err-span").innerHTML=err;
-  document.getElementById("error").style.display="block"
 }
 
-function hideError(){
-  document.getElementById("err-span").innerHTML="";
-  document.getElementById("error").style.display="none"
-}
-
-document.getElementById("copybutton").addEventListener("click", function (){
-  // will have to check browser compatibility for this
-  navigator.clipboard.writeText(go.getValue())
-  codecopied.style.display="inline"
-  window.setTimeout(function (){
-    codecopied.style.display="none"
-  }, 500)
-});
-
-document.getElementById("cr_check").addEventListener("change", function (){
-  if (isCRChecked()){
-    document.getElementById("cr_params").style.display = "block"
-
-    // Set sample packages
+function setCRSample(){
     document.getElementById("scheme").value="k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme"
     document.getElementById("apis").value="k8s.io/sample-controller/pkg/apis/samplecontroller"
     document.getElementById("client").value="k8s.io/sample-controller/pkg/generated/clientset/versioned"
@@ -267,17 +279,16 @@ spec:
 
     // Add sample output
     go.setValue(`// Auto-generated by kyaml2go - https://github.com/PrasadG193/kyaml2go
-// Auto-generated by kyaml2go - https://github.com/PrasadG193/kyaml2go
 package main
 
 import (
+	"context"
 	"fmt"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	samplecontrollerv1alpha1 "k8s.io/sample-controller/pkg/apis/samplecontroller/v1alpha1"
+	clientset "k8s.io/sample-controller/pkg/generated/clientset/versioned"
 	"os"
 	"path/filepath"
 )
@@ -294,72 +305,37 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	clientset, err := kubernetes.NewForConfig(config)
+	client, err := clientset.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
-	kubeclient := clientset.AppsV1().Deployments("default")
+	kubeclient := client.SamplecontrollerV1alpha1().Foos("default")
 
 	// Create resource object
-	object := &appsv1.Deployment{
+	object := &samplecontrollerv1alpha1.Foo{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
+			Kind:       "Foo",
+			APIVersion: "samplecontroller.k8s.io/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-deployment",
+			Name: "example-foo",
 		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: ptrint32(2),
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "demo",
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": "demo",
-					},
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						corev1.Container{
-							Name:  "web",
-							Image: "nginx:1.12",
-							Ports: []corev1.ContainerPort{
-								corev1.ContainerPort{
-									Name:          "http",
-									HostPort:      0,
-									ContainerPort: 80,
-									Protocol:      corev1.Protocol("TCP"),
-								},
-							},
-							Resources:       corev1.ResourceRequirements{},
-							ImagePullPolicy: corev1.PullPolicy("IfNotPresent"),
-						},
-					},
-				},
-			},
-			Strategy:        appsv1.DeploymentStrategy{},
-			MinReadySeconds: 0,
+		Spec: samplecontrollerv1alpha1.FooSpec{
+			DeploymentName: "example-foo",
+			Replicas:       ptrint32(1),
 		},
 	}
 
 	// Manage resource
-	_, err = kubeclient.Create(object)
+	_, err = kubeclient.Create(context.TODO(), object, metav1.CreateOptions{})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Deployment Created successfully!")
+	fmt.Println("Foo Created successfully!")
 }
 
 func ptrint32(p int32) *int32 {
 	return &p
 }
     `)
-  } else {
-    document.getElementById("cr_params").style.display = "none"
-  }
-
-});
+}
