@@ -61,9 +61,9 @@ document.getElementById("convert").addEventListener('click', ()=>{
     query =""
     if (isCRChecked()){
       CRDetailValid = true
-      scheme = getValue("scheme")
-      apis = getValue("apis")
-      clients  = getValue("client")
+      scheme = getValue("scheme").trim()
+      apis = getValue("apis").trim()
+      clients  = getValue("client").trim()
 
       query = "&cr=true&scheme="+scheme+"&apis="+apis+"&client="+clients
     }

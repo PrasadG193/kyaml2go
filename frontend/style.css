@@ -156,20 +156,56 @@ button:focus{
   text-align: right;
 }
 
-.credits {
+.credits{
   color: gray;
   text-align: center;
 }
+
+/* Tooltip container */
+.tooltip{
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+  opacity: 1;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext{
+  visibility: hidden;
+  width: 500px;
+  background-color: gray;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+ 
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 1;
+}
+
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
 #cr_params{
   display: none;
 }
+
 #cr_ip{
-  width: 646px;
+  width: 50%;
   margin: auto;
+  align: center;
 }
+
 #cr_ip input{
+  width: 100%;
   border: none;
   border: 1px solid gray;
   padding: 5px;
   border-radius: 4px;
 }
+
+

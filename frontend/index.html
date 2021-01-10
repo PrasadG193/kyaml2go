@@ -63,24 +63,26 @@
       </span>
     </div>
     <div id="cr_params">
-        <div id="cr_ip">
-          <table>
-            <tr>
-                <td colspan="3">Please enter details here</td>
-            </tr>
-            <tr>
-              <td>
-                <input type="text" id="scheme" placeholder="scheme">
-              </td>
-              <td>
-                <input type="text" id="apis" placeholder="apis">
-              </td>
-              <td>
-                <input type="text" id="client" placeholder="client">
-              </td>
-            </tr>
-            </table>
-        </div>
+      <form>
+      <table id="cr_ip">
+      <colgroup>
+        <col span="1" style="width:110px">
+      </colgroup>
+      <tr>
+        <td>scheme pkg <div class="tooltip">?<span class="tooltiptext">Package containing AddToScheme var declared. e.g k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme</span></div>
+        </td>
+        <td><input type="text" id="scheme" placeholder="scheme package"></td>
+      </tr>
+      <tr>
+        <td>api pkg <div class="tooltip">?<span class="tooltiptext">Package containing custom resource object type defined (without version) e.g k8s.io/sample-controller/pkg/apis/samplecontroller</span></div>
+        <td><input type="text" id="apis" placeholder="api package"></td>
+      </tr>
+      <tr>
+        <td>client pkg <div class="tooltip">?<span class="tooltiptext">Auto generated typed client package where Clientset type is defined (without version) e.g k8s.io/sample-controller/pkg/generated/clientset/versioned</span></div>
+        <td><input type="text" id="client" placeholder="client package"></td>
+      <tr>
+      </table>
+      </form>
     </div>
     <div class="container">
       <!-- Example row of columns -->
