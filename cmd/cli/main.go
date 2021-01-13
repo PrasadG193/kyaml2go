@@ -70,11 +70,13 @@ func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string
 	}
 
 	// Set default client and api packages if not passed
-	if client == "" {
-		client = "github.com/PATH/TO/TYPED/GENERATED/CLIENTSET/versioned"
-	}
-	if api == "" {
-		api = "github.com/PATH/TO/APIS/PACKAGE/resource"
+	if isCR {
+		if client == "" {
+			client = "github.com/PATH/TO/TYPED/GENERATED/CLIENTSET/versioned"
+		}
+		if api == "" {
+			api = "github.com/PATH/TO/APIS/PACKAGE/resource"
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
