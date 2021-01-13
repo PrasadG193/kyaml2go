@@ -68,6 +68,15 @@ func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string
 	for scanner.Scan() {
 		data += scanner.Text() + "\n"
 	}
+
+	// Set default client and api packages if not passed
+	if client == "" {
+		client = "github.com/PATH/TO/TYPED/GENERATED/CLIENTSET/versioned"
+	}
+	if api == "" {
+		api = "github.com/PATH/TO/APIS/PACKAGE/resource"
+	}
+
 	if err := scanner.Err(); err != nil {
 		log.Fatal("Error while reading input:", err)
 	}
