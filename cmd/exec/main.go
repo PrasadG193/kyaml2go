@@ -28,7 +28,7 @@ func main() {
 			Usage: "Generate code for creating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("create", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("create", c.Bool("cr"), c.String("scheme"))
 			},
 		},
 		{
@@ -36,7 +36,7 @@ func main() {
 			Usage: "Generate code for updating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("update", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("update", c.Bool("cr"), c.String("scheme"))
 			},
 		},
 		{
@@ -44,7 +44,7 @@ func main() {
 			Usage: "Generate code to get a resource object",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("get", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("get", c.Bool("cr"), c.String("scheme"))
 			},
 		},
 		{
@@ -52,7 +52,7 @@ func main() {
 			Usage: "Generate code for deleting a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return buildAndRun("delete", c.Bool("cr"), c.String("client"), c.String("scheme"), c.String("apis"))
+				return buildAndRun("delete", c.Bool("cr"), c.String("scheme"))
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func escape(p string) string {
 	return strings.ReplaceAll(p, "/", "\\/")
 }
 
-func buildAndRun(method string, isCR bool, client, scheme, api string) error {
+func buildAndRun(method string, isCR bool, scheme string) error {
 	k2gcli := fmt.Sprintf("%s/bin/kyaml2go_cli", os.Getenv("GOPATH"))
 	// Rebuild CLI with provided packages
 	if isCR {
