@@ -21,4 +21,4 @@ COPY Makefile ./
 # Build binary
 RUN make
 
-ENTRYPOINT ["kyaml2go_serve"]
+ENTRYPOINT ["kyaml2go"]
