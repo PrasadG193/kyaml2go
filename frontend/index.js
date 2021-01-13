@@ -61,10 +61,7 @@ function isCRChecked(){
 }
 
 function getValue(id){
-  v = document.getElementById(id).value
-  if (v.length ==0){
-    CRDetailValid = false
-  }
+  v = document.getElementById(id).value.trim()
   return v
 }
 
@@ -77,9 +74,12 @@ document.getElementById("convert").addEventListener('click', ()=>{
     query =""
     if (isCRChecked()){
       CRDetailValid = true
-      scheme = getValue("scheme").trim()
-      apis = getValue("apis").trim()
-      clients  = getValue("client").trim()
+      scheme = getValue("scheme")
+      if (scheme.length == 0){
+        CRDetailValid = false
+      }
+      apis = getValue("apis")
+      clients  = getValue("client")
       query = "&cr=true&scheme="+scheme+"&apis="+apis+"&client="+clients
     }
 
@@ -88,7 +88,7 @@ document.getElementById("convert").addEventListener('click', ()=>{
       hideError()
       generatorCall(action, query)
     } else{
-      displayError("Please enter correct CR details")
+      displayError("Please enter correct CR details. scheme pkg is required.")
     }
   }
   else{
