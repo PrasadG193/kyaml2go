@@ -21,7 +21,7 @@ generate_changelog() {
     local version=$1
 
     # generate changelog from github
-    github_changelog_generator PrasadG193/kyaml2go -t ${GITHUB_TOKEN} --future-release ${version} -o CHANGELOG.md
+    github_changelog_generator --user PrasadG193 --project kyaml2go -t ${GITHUB_TOKEN} --future-release ${version} -o CHANGELOG.md
     sed -i '$d' CHANGELOG.md
 }
 
