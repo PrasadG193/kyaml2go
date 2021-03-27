@@ -1,148 +1,176 @@
 //const URL = "http://localhost:8080/v1/convert"
-let BASE_URL = "https://kyaml2go-oymillvkxq-uc.a.run.app/v1/convert?method="
+let BASE_URL = "https://kyaml2go-oymillvkxq-uc.a.run.app/v1/convert?method=";
 
-let go = document.getElementById("goGenerator")
-let codecopied = document.getElementById("codecopied")
-let editor = ""
-let CRDetailValid = true
+let go = document.getElementById("goGenerator");
+let codecopied = document.getElementById("codecopied");
+let editor = "";
+let CRDetailValid = true;
+let changeTheme = document.getElementById("changeTheme");
+let settheme = document.body.getAttribute("dark-theme");
+let codeMirrorMainClass = document.getElementsByClassName(
+	"CodeMirror cm-s-default"
+);
+const MODE_LIGHT  = "light"
+const MODE_DARK = "dark"
+
+// set theme
+function applyTheme() {
+	settheme = document.body.getAttribute("dark-theme");
+	settheme == MODE_LIGHT
+		? document.body.setAttribute("dark-theme", MODE_DARK)
+		: document.body.setAttribute("dark-theme", MODE_LIGHT);
+	let value = settheme == MODE_LIGHT ? MODE_DARK : MODE_LIGHT
+	localStorage.setItem("camelTheme", `${value}`);
+	changeEditorMode();
+}
+
+// apply mode
+changeTheme.addEventListener("change", (event) => {
+	applyTheme();
+});
 
 // Codemirror modes
 editor = CodeMirror.fromTextArea(document.getElementById("yamlspecs"), {
-  lineNumbers : true,
-  mode: "text/x-yaml"
+	lineNumbers: true,
+	mode: "text/x-yaml",
 });
 
 go = CodeMirror.fromTextArea(document.getElementById("goGenerator"), {
-  lineNumbers : true,
-  mode: "text/x-go"
+	lineNumbers: true,
+	mode: "text/x-go",
 });
 
-window.generatorCall=function (action, query){
-  URL = formGooleFuncURL(action)+query
+window.generatorCall = function (action, query) {
+	URL = formGooleFuncURL(action) + query;
 
-  let yamlData  = document.getElementById("yamlspecs").value
-  document.getElementById('yamlspecs').style.border = "1px solid #ced4da"
-  yamlData = editor.getValue()
-  $.ajax({
-    'url' : `${URL}`,
-    'type' : 'POST',
-    'data' : yamlData,
-    'success' : function(data) {
-        document.getElementById("error").style.display="none"
-        document.getElementById("err-span").innerHTML="";
-        go.setValue(data)
-    },
-    'error' : function(jqXHR, request, error)
-    {
-      document.getElementById('yamlspecs').style.border = "1px solid red"
-      if (jqXHR.status == 400) {
-        if (isCRChecked()){
-          go.setOption("lineWrapping", true)
-          displayError('Invalid Kubernetes resource spec or package names. Please check the spec and try again.')
-          go.setValue(jqXHR.responseText)
-        } else {
-          displayError('Invalid Kubernetes resource spec. Please check the spec and try again.')
-        }
-      } else {
-        displayError('Something went wrong! Please report this to https://github.com/PrasadG193/kyaml2go/issues')
-      }
-    }
-  });
+	let yamlData = document.getElementById("yamlspecs").value;
+	document.getElementById("yamlspecs").style.border = "1px solid #ced4da";
+	yamlData = editor.getValue();
+	$.ajax({
+		url: `${URL}`,
+		type: "POST",
+		data: yamlData,
+		success: function (data) {
+			document.getElementById("error").style.display = "none";
+			document.getElementById("err-span").innerHTML = "";
+			go.setValue(data);
+		},
+		error: function (jqXHR, request, error) {
+			document.getElementById("yamlspecs").style.border = "1px solid red";
+			if (jqXHR.status == 400) {
+				if (isCRChecked()) {
+					go.setOption("lineWrapping", true);
+					displayError(
+						"Invalid Kubernetes resource spec or package names. Please check the spec and try again."
+					);
+					go.setValue(jqXHR.responseText);
+				} else {
+					displayError(
+						"Invalid Kubernetes resource spec. Please check the spec and try again."
+					);
+				}
+			} else {
+				displayError(
+					"Something went wrong! Please report this to https://github.com/PrasadG193/kyaml2go/issues"
+				);
+			}
+		},
+	});
+};
 
-}
-
-function formGooleFuncURL(action){
-  return BASE_URL+action
+function formGooleFuncURL(action) {
+	return BASE_URL + action;
 }
 
 // checks if cr checkbox is checked
-function isCRChecked(){
-  return document.getElementById("cr_check").checked
+function isCRChecked() {
+	return document.getElementById("cr_check").checked;
 }
 
-function getValue(id){
-  v = document.getElementById(id).value.trim()
-  return v
+function getValue(id) {
+	v = document.getElementById(id).value.trim();
+	return v;
 }
 
 //Convert
-dropDown = document.getElementById("selectaction")
-document.getElementById("convert").addEventListener('click', ()=>{
-  action = dropDown.value
-  if (action != "select"){
-    hideError()
-    query =""
-    if (isCRChecked()){
-      CRDetailValid = true
-      scheme = getValue("scheme")
-      if (scheme.length == 0){
-        CRDetailValid = false
-      }
-      apis = getValue("apis")
-      clients  = getValue("client")
-      query = "&cr=true&scheme="+scheme+"&apis="+apis+"&client="+clients
-    }
+dropDown = document.getElementById("selectaction");
+document.getElementById("convert").addEventListener("click", () => {
+	action = dropDown.value;
+	if (action != "select") {
+		hideError();
+		query = "";
+		if (isCRChecked()) {
+			CRDetailValid = true;
+			scheme = getValue("scheme");
+			if (scheme.length == 0) {
+				CRDetailValid = false;
+			}
+			apis = getValue("apis");
+			clients = getValue("client");
+			query =
+				"&cr=true&scheme=" + scheme + "&apis=" + apis + "&client=" + clients;
+		}
 
-    if (CRDetailValid){
-      go.setValue("Generating...")
-      hideError()
-      generatorCall(action, query)
-    } else{
-      displayError("Please enter correct CR details. scheme pkg is required.")
-    }
-  }
-  else{
-    displayError("Please select the method.")
-  }
-})
+		if (CRDetailValid) {
+			go.setValue("Generating...");
+			hideError();
+			generatorCall(action, query);
+		} else {
+			displayError("Please enter correct CR details. scheme pkg is required.");
+		}
+	} else {
+		displayError("Please select the method.");
+	}
+});
 
 //Clear YAML
-document.getElementById('clearYaml').addEventListener('click',()=>{
-  editor.setValue('')
-})
+document.getElementById("clearYaml").addEventListener("click", () => {
+	editor.setValue("");
+});
 
 //Clear Go
-document.getElementById('clearGo').addEventListener('click',()=>{
-  go.setValue('')
-})
+document.getElementById("clearGo").addEventListener("click", () => {
+	go.setValue("");
+});
 
 // Set sample specs and code
 $(document).ready(setDeploymentSample());
 
-function displayError(err){
-  document.getElementById("err-span").innerHTML=err;
-  document.getElementById("error").style.display="block"
+function displayError(err) {
+	document.getElementById("err-span").innerHTML = err;
+	document.getElementById("error").style.display = "block";
 }
 
-function hideError(){
-  document.getElementById("err-span").innerHTML="";
-  document.getElementById("error").style.display="none"
-  go.setOption("lineWrapping", false)
+function hideError() {
+	document.getElementById("err-span").innerHTML = "";
+	document.getElementById("error").style.display = "none";
+	go.setOption("lineWrapping", false);
 }
 
-document.getElementById("copybutton").addEventListener("click", function (){
-  // will have to check browser compatibility for this
-  navigator.clipboard.writeText(go.getValue())
-  codecopied.style.display="inline"
-  window.setTimeout(function (){
-    codecopied.style.display="none"
-  }, 500)
+document.getElementById("copybutton").addEventListener("click", function () {
+	if (window.navigator) {
+		navigator.clipboard.writeText(go.getValue());
+		codecopied.style.display = "flex";
+		window.setTimeout(function () {
+			codecopied.style.display = "none";
+		}, 700);
+	}
 });
 
-document.getElementById("cr_check").addEventListener("change", function (){
-  hideError()
-  if (isCRChecked()){
-    document.getElementById("cr_params").style.display = "block"
-    setCRSample()
-  } else {
-    document.getElementById("cr_params").style.display = "none"
-    setDeploymentSample()
-  }
+document.getElementById("cr_check").addEventListener("change", function () {
+	hideError();
+	if (isCRChecked()) {
+		document.getElementById("cr_params").style.display = "block";
+		setCRSample();
+	} else {
+		document.getElementById("cr_params").style.display = "none";
+		setDeploymentSample();
+	}
 });
 
-function setDeploymentSample(){
-  // Add sample input
-  editor.setValue(`# Paste your Kubernetes yaml spec here...
+function setDeploymentSample() {
+	// Add sample input
+	editor.setValue(`# Paste your Kubernetes yaml spec here...
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -165,10 +193,10 @@ spec:
         - containerPort: 80
           name: http
           protocol: TCP
-`)
+`);
 
-  // Add sample output
-  go.setValue(`// Auto-generated by kyaml2go - https://github.com/PrasadG193/kyaml2go
+	// Add sample output
+	go.setValue(`// Auto-generated by kyaml2go - https://github.com/PrasadG193/kyaml2go
 package main
 
 import (
@@ -258,16 +286,19 @@ func main() {
 func ptrint32(p int32) *int32 {
 	return &p
 }
-  `)
+  `);
 }
 
-function setCRSample(){
-    document.getElementById("scheme").value="k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme"
-    document.getElementById("apis").value="k8s.io/sample-controller/pkg/apis/samplecontroller"
-    document.getElementById("client").value="k8s.io/sample-controller/pkg/generated/clientset/versioned"
+function setCRSample() {
+	document.getElementById("scheme").value =
+		"k8s.io/sample-controller/pkg/generated/clientset/versioned/scheme";
+	document.getElementById("apis").value =
+		"k8s.io/sample-controller/pkg/apis/samplecontroller";
+	document.getElementById("client").value =
+		"k8s.io/sample-controller/pkg/generated/clientset/versioned";
 
-    // Add sample input
-    editor.setValue(`# Paste your Kubernetes yaml spec here...
+	// Add sample input
+	editor.setValue(`# Paste your Kubernetes yaml spec here...
 apiVersion: samplecontroller.k8s.io/v1alpha1
 kind: Foo
 metadata:
@@ -275,10 +306,10 @@ metadata:
 spec:
   deploymentName: example-foo
   replicas: 1
-   `)
+   `);
 
-    // Add sample output
-    go.setValue(`// Auto-generated by kyaml2go - https://github.com/PrasadG193/kyaml2go
+	// Add sample output
+	go.setValue(`// Auto-generated by kyaml2go - https://github.com/PrasadG193/kyaml2go
 package main
 
 import (
@@ -337,5 +368,21 @@ func main() {
 func ptrint32(p int32) *int32 {
 	return &p
 }
-    `)
+    `);
+}
+
+function changeEditorMode() {
+	for (let i = 0; i < codeMirrorMainClass.length; i++) {
+		document
+			.getElementsByClassName("CodeMirror")
+		[i].classList.toggle("cm-s-material-darker");
+	}
+}
+
+// Check if theme mode is already set
+if (localStorage.getItem("camelTheme")) {
+	const value = localStorage.getItem("camelTheme");
+	document.body.setAttribute("dark-theme", value);
+	value !== MODE_LIGHT && document.getElementById("theme-check").setAttribute("checked", "checked");
+	value !== MODE_LIGHT && changeEditorMode();
 }

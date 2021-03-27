@@ -1,47 +1,91 @@
-html, body, main {
-    height:100%;
+[dark-theme="light"] {
+  --headBg_color: azure;
+  --primary_bg: #ffffff;
+  --primary_color: #000000;
+  --horizontal_color: rgba(0, 0, 0, 0.1);
+  --heading_color: rgb(70, 130, 180);
 }
 
-.apply_space{
-    width: 45%;
+[dark-theme="dark"] {
+  --headBg_color: #252627;
+  --primary_bg: #252627;
+  --primary_color: #ffffff;
+  --horizontal_color: #ddc4ad;
+  --heading_color: #ffffff;
 }
 
-.button_yaml{
-    height: 50px;
-    top: 50%;
-    margin: auto;
-    left: 0;
-    right: 0;
+html,
+body,
+main {
+  height: 100%;
 }
-#selectaction{
+
+main {
+  background-color: var(--primary_bg);
+}
+
+label {
+  color: var(--primary_color);
+}
+
+.apply_space {
+  width: 45%;
+}
+
+.button_yaml {
+  height: 50px;
+  top: 50%;
+  margin: auto;
+  left: 0;
+  right: 0;
+}
+#selectaction {
   margin: auto;
   vertical-align: middle;
   padding: 5px;
   background-color: white;
   border-radius: 3px;
 }
-#convert{
+#convert {
   margin-top: 20px;
 }
 /* Safari 4.0 - 8.0 */
 @-webkit-keyframes example {
-    0%   {border-color: #FF851B;}
-    25%  {border-color: #0074D9;}
-    50%  {border-color: #F012BE;}
-    75%  {border-color: #B10DC9;}
-    100% {border-color: #001f3f;}
-
+  0% {
+    border-color: #ff851b;
   }
-
-  /* Standard syntax */
-  @keyframes example {
-    0%   {border-color: #FF851B;}
-    25%  {border-color: #0074D9;}
-    50%  {border-color: #F012BE;}
-    75%  {border-color: #B10DC9;}
-    100% {border-color: #001f3f;}
+  25% {
+    border-color: #0074d9;
   }
+  50% {
+    border-color: #f012be;
+  }
+  75% {
+    border-color: #b10dc9;
+  }
+  100% {
+    border-color: #001f3f;
+  }
+}
 
+/* Standard syntax */
+@keyframes example {
+  0% {
+    border-color: #ff851b;
+  }
+  25% {
+    border-color: #0074d9;
+  }
+  50% {
+    border-color: #f012be;
+  }
+  75% {
+    border-color: #b10dc9;
+  }
+  100% {
+    border-color: #001f3f;
+  }
+}
 
 .btn {
   background-color: steelBlue; /* Blue background */
@@ -50,59 +94,83 @@ html, body, main {
   cursor: pointer; /* Mouse pointer on hover */
 }
 
-.container{
-    max-width: 80%;
-    height: 100%;
+.main-container {
+  height: 100%;
+  background-color: var(--primary_bg);
 }
 
-.coversion{
-    width: 21px;
-    margin-left: 12px;
-    margin-top: 16px;
-}
-.clear_code{
-    float: right;
-    margin-top: 8px;
+.container {
+  max-width: 80%;
+  height: inherit;
 }
 
-.modify{
+.coversion {
+  width: 21px;
+  margin-left: 12px;
+  margin-top: 16px;
+}
+.clear_code {
+  float: right;
+  margin-top: 8px;
+}
+
+.modify {
   display: flex;
   justify-content: center;
 }
 
-.go-float{
+.go-float {
   float: right;
 }
 
-.flr{
+.flr {
   float: right;
   cursor: pointer;
-  -webkit-transition: all ease  .1s;
+  -webkit-transition: all ease 0.1s;
+  background-color: white;
+  border-radius: 50%;
+  height: 24px;
+  width: 24px;
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
 }
-.fa-copy:hover{
+/**
+* Removed hover on copy functionality
+* It doesn't look good
+*/
+/* .fa-copy:hover {
   transform: scale(1.3);
-}
-#codecopied{
+} */
+#codecopied {
   display: none;
+  margin-right: 12px;
+  background: black;
+  color: white;
+  padding: 2px 4px;
+  text-align: center;
+  border-radius: 20px;
+  font-size: 12px;
+  align-items: center;
 }
 .jumbotron {
   padding: 10px 0 !important;
-  background-color: azure !important;
+  background-color: var(--headBg_color) !important;
 }
 
-
-.infoData{
+.infoData {
   margin: 16px 42px;
-  width: 50%
+  width: 50%;
 }
 
-.k2Go{
-  color: steelblue;
+.k2Go {
+  color: var(--heading_color);
   font-family: monospace;
   display: inline;
 }
 
-#alpha{
+#alpha {
   border: 1px solid steelblue;
   border-radius: 3px;
   color: steelblue;
@@ -112,29 +180,28 @@ html, body, main {
   padding-left: 2px;
   padding-right: 2px;
 }
-.secondaryData{
+.secondaryData {
   font-size: 15px;
-  color: steelblue;
+  color: var(--heading_color);
   font-family: monospace;
   margin-top: 4px;
 }
 
-button:focus{
+button:focus {
   outline: none;
   box-shadow: none;
 }
 
-.pointer{
+.pointer {
   cursor: pointer;
 }
-
 
 .CodeMirror {
   border: 1px solid lavender !important;
   height: 100%;
 }
 
-#error{
+#error {
   width: 50%;
   margin: auto;
   border: 1px solid azure;
@@ -144,25 +211,27 @@ button:focus{
   color: red;
 }
 
-.sidepanel{
-  display:flex;
-  justify-content:space-around;
+.sidepanel {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
 }
 
-.sidebutton{
+.sidebutton {
   position: relative;
   margin-top: 16px;
   margin-left: 10px;
   text-align: right;
 }
 
-.credits{
+.credits {
   color: gray;
   text-align: center;
 }
 
 /* Tooltip container */
-.tooltip{
+.tooltip {
   position: relative;
   display: inline-block;
   border-bottom: 1px dotted black;
@@ -170,7 +239,7 @@ button:focus{
 }
 
 /* Tooltip text */
-.tooltip .tooltiptext{
+.tooltip .tooltiptext {
   visibility: hidden;
   width: 500px;
   background-color: gray;
@@ -178,29 +247,28 @@ button:focus{
   text-align: center;
   padding: 5px 0;
   border-radius: 6px;
- 
+
   /* Position the tooltip text - see examples below! */
   position: absolute;
   z-index: 1;
 }
-
 
 /* Show the tooltip text when you mouse over the tooltip container */
 .tooltip:hover .tooltiptext {
   visibility: visible;
 }
 
-#cr_params{
+#cr_params {
   display: none;
 }
 
-#cr_ip{
+#cr_ip {
   width: 50%;
   margin: auto;
   align: center;
 }
 
-#cr_ip input{
+#cr_ip input {
   width: 100%;
   border: none;
   border: 1px solid gray;
@@ -208,4 +276,22 @@ button:focus{
   border-radius: 4px;
 }
 
+.go-copied {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
+.code-copy {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+hr {
+  border-top: 1px solid var(--horizontal_color);
+}
+
+td {
+  color: var(--primary_color);
+}
