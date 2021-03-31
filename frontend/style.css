@@ -274,7 +274,10 @@ button:focus {
   border: 1px solid gray;
   padding: 5px;
   border-radius: 4px;
+  background-color: var(--primary_bg);
+  color: var(--primary_color);
 }
+
 
 .go-copied {
   display: flex;
