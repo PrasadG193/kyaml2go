@@ -55,10 +55,12 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/rs/cors v1.7.0
 	github.com/urfave/cli v1.22.2
+	github.com/vmware-tanzu/velero v1.7.0 // indirect
 	k8s.io/api v0.22.2
 	k8s.io/apiextensions-apiserver v0.19.12
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v0.22.2
+	k8s.io/sample-controller v0.22.2 // indirect
 )
 
 replace k8s.io/component-helpers => k8s.io/component-helpers v0.22.2
