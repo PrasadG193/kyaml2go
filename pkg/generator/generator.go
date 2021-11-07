@@ -297,14 +297,11 @@ func (c *CodeGen) addDynamicKubeManage() {
 	methodStr := strings.Title(c.method.String())
 	switch c.method {
 	case types.MethodDelete:
-		//method = fmt.Sprintf("err = client.Resource(gvr).Namespace(\"%s\").%s(context.TODO(), \"%s\", metav1.%sOptions{})", c.namespace, methodStr, c.name, methodStr)
 		method = fmt.Sprintf("err = kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
 	case types.MethodGet:
-		//method = fmt.Sprintf("found, err := client.Resource(gvr).Namespace(\"%s\").%s(context.TODO(), \"%s\", metav1.%sOptions{})", c.namespace, methodStr, c.name, methodStr)
 		method = fmt.Sprintf("found, err := kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
 	default:
 		c.imports += "\"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured\"\n"
-		//method = fmt.Sprintf("_, err = client.Resource(gvr).Namespace(\"%s\").%s(context.TODO(), object, metav1.%sOptions{})", c.namespace, methodStr, methodStr)
 		method = fmt.Sprintf("_, err = kubeclient.%s(context.TODO(), object, metav1.%sOptions{})", methodStr, methodStr)
 	}
 
