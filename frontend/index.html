@@ -102,12 +102,18 @@
             <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearYaml" />
           </div>
           <div class="button_yaml" id="dd_wrapper">
-            <div style="text-align: center;">
+            <select id="selectclient"> 
+              <option value="type_client" title="Kubernetes typed client set">Typed</option>
+              <option value="type_dynamic" title="Kubernetes dynamic client set">Dynamic</option>
+            </select>
+            <br>
+            <hr>
+            <div id="cr_box" style="text-align: center;">
             <label for="Is CR?">Is CR?</label>
             <br>
             <input type="checkbox" id="cr_check" name="cr_check" value="Is CR?">
-            </div>
             <hr>
+            </div>
             <select id="selectaction">
               <option value="create">Create</option>
               <option value="update">Update</option>

@@ -7,28 +7,19 @@ import (
 	"strings"
 
 	"github.com/gdexlab/go-render/render"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/PrasadG193/kyaml2go/pkg/importer"
 	"github.com/PrasadG193/kyaml2go/pkg/kube"
+	"github.com/PrasadG193/kyaml2go/pkg/types"
 )
 
-// KubeMethod define methods to manage K8s resource
-type KubeMethod string
-
 const (
-	// MethodCreate to create K8s resource
-	MethodCreate = "create"
-	// MethodGet to get K8s resource
-	MethodGet = "get"
-	// MethodUpdate to update K8s resource
-	MethodUpdate = "update"
-	// MethodDelete to delete K8s resource
-	MethodDelete = "delete"
-
 	crdKind   = "CustomResourceDefinition"
 	crdClient = "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 )
@@ -36,16 +27,18 @@ const (
 // CodeGen holds K8s resource object
 type CodeGen struct {
 	raw             []byte
-	method          KubeMethod
+	method          types.KubeMethod
 	name            string
 	namespace       string
 	kind            string
 	group           string
 	version         string
-	client          string
+	resource        string
+	client          types.Client
+	clientpkg       string
 	crAPI           string
 	isCR            bool
-	isNamespaced    bool
+	namespaced      bool
 	replicaCount    string
 	termGracePeriod string
 	imports         string
@@ -56,24 +49,25 @@ type CodeGen struct {
 	extraFuncs      map[string]string
 }
 
-func (m KubeMethod) String() string {
-	return string(m)
-}
-
 // New returns instance of CodeGen
-func New(raw []byte, method KubeMethod, isCR, isNamespaced bool, client, crAPI string) CodeGen {
+func New(raw []byte, method types.KubeMethod, isCR, namespaced, isDynamic bool, clientpkg, crAPI string) CodeGen {
+	client := types.TypedClient
+	if isDynamic {
+		client = types.DynamicClient
+	}
 	return CodeGen{
-		raw:          raw,
-		method:       method,
-		client:       client,
-		crAPI:        crAPI,
-		isCR:         isCR,
-		isNamespaced: isNamespaced,
-		extraFuncs:   make(map[string]string),
+		raw:        raw,
+		method:     method,
+		clientpkg:  clientpkg,
+		crAPI:      crAPI,
+		isCR:       isCR,
+		namespaced: namespaced,
+		extraFuncs: make(map[string]string),
+		client:     client,
 	}
 }
 
-// Generate returns Go code for KubeMethod on a K8s resource
+// Generate returns Go code for types.KubeMethod on a K8s resource
 func (c *CodeGen) Generate() (code string, err error) {
 	// Convert yaml specs to runtime object
 	if err = c.addKubeObject(); err != nil {
@@ -81,24 +75,28 @@ func (c *CodeGen) Generate() (code string, err error) {
 	}
 
 	if c.crAPI != "" {
-		setCRImports(c.kind, c.group, c.version, c.crAPI, c.isNamespaced)
+		setCRImports(c.kind, c.group, c.version, c.crAPI, c.namespaced)
 	}
 
 	// Create kubeclient
-	c.addKubeClient()
-	// Add methods to kubeclient
-	c.addKubeManage()
-	// Remove unnecessary fields
-	c.cleanupObject()
+	switch c.client {
+	case types.DynamicClient:
+		c.addDynamicKubeClient()
+		c.addDynamicKubeManage()
+	default:
+		c.addTypedKubeClient()
+		c.addTypedKubeManage()
+		// Remove unnecessary fields
+		c.cleanupObject()
+	}
 
-	if c.method != MethodDelete && c.method != MethodGet {
+	if c.client == types.TypedClient && c.method != types.MethodDelete && c.method != types.MethodGet {
 		var imports string
-		i := importer.New(c.kind, c.group, c.version, c.kubeObject, c.client)
+		i := importer.New(c.kind, c.group, c.version, c.kubeObject, c.clientpkg, c.client)
 		imports, c.kubeObject = i.FindImports()
 		c.imports += imports
 		c.addPtrMethods()
 	}
-
 	return c.prettyCode()
 }
 
@@ -107,19 +105,37 @@ func (c *CodeGen) addKubeObject() error {
 	var err error
 	var objMeta *schema.GroupVersionKind
 	setScheme()
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-	c.runtimeObject, objMeta, err = decode(c.raw, nil, nil)
+
+	switch c.client {
+	case types.DynamicClient:
+		obj := &unstructured.Unstructured{}
+		_, objMeta, err = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(c.raw, nil, obj)
+		c.runtimeObject = obj
+	default:
+		c.runtimeObject, objMeta, err = scheme.Codecs.UniversalDeserializer().Decode(c.raw, nil, nil)
+	}
 	if err != nil || objMeta == nil {
 		return fmt.Errorf("Error while decoding YAML object. Err was: %s", err)
 	}
 
-	// Find group, kind and version
+	// Find group, kind, resource and version
 	c.kind = strings.Title(objMeta.Kind)
 	c.group = strings.Title(objMeta.Group)
 	if len(c.group) == 0 {
 		c.group = "Core"
 	}
 	c.version = strings.Title(objMeta.Version)
+	// Pod => Pods
+	c.resource = fmt.Sprintf("%ss", c.kind)
+	// Ingress => Ingresses
+	if strings.HasSuffix(c.kind, "ss") {
+		c.resource = fmt.Sprintf("%ses", c.kind)
+	}
+	// PodSecurityPolicy => PodSecurityPolicies
+	if strings.HasSuffix(c.kind, "y") {
+		// Ingress => Ingresses
+		c.resource = fmt.Sprintf("%sies", strings.TrimRight(c.kind, "y"))
+	}
 
 	// Find replica count
 	var re = regexp.MustCompile(`replicas:\s?([0-9]+)`)
@@ -143,23 +159,33 @@ func (c *CodeGen) addKubeObject() error {
 	}
 
 	// Add namespace
-	c.namespace = "default"
-	re = regexp.MustCompile(`namespace:\s?"?([-a-zA-Z]+)`)
-	matched = re.FindAllStringSubmatch(string(c.raw), -1)
-	if len(matched) >= 1 && len(matched[0]) == 2 {
-		c.namespace = matched[0][1]
+	if nsScoped, ok := kube.KindNamespaced[c.kind]; nsScoped || (!ok && c.namespaced) {
+		c.namespace = "default"
+	}
+
+	if c.kind != "MutatingWebhookConfiguration" && c.kind != "ValidatingWebhookConfiguration" {
+		re = regexp.MustCompile(`namespace:\s?"?([-a-zA-Z]+)`)
+		matched = re.FindAllStringSubmatch(string(c.raw), -1)
+		if len(matched) >= 1 && len(matched[0]) == 2 {
+			c.namespace = matched[0][1]
+		}
 	}
 
 	// Replace Data with StringData for secret object types
 	c.secretStringData()
 
 	// Pretty struct
-	c.kubeObject = prettyStruct(render.AsCode(c.runtimeObject))
+	switch c.client {
+	case types.DynamicClient:
+		c.kubeObject = prettyStruct(fmt.Sprintf("%#v", c.runtimeObject))
+	default:
+		c.kubeObject = prettyStruct(render.AsCode(c.runtimeObject))
+	}
 	return nil
 }
 
-// addKubeClient adds code to create kube client
-func (c *CodeGen) addKubeClient() {
+// addTypedKubeClient adds code to create typed kube client
+func (c *CodeGen) addTypedKubeClient() {
 	c.kubeClient = fmt.Sprintf(`var kubeconfig string
 	kubeconfig, ok := os.LookupEnv("KUBECONFIG")
 	if !ok {
@@ -176,27 +202,46 @@ func (c *CodeGen) addKubeClient() {
         }
 	`)
 
-	// Pod => Pods
-	kindPlurals := fmt.Sprintf("%ss", c.kind)
-	// Ingress => Ingresses
-	if strings.HasSuffix(c.kind, "ss") {
-		kindPlurals = fmt.Sprintf("%ses", c.kind)
-	}
-	// PodSecurityPolicy => PodSecurityPolicies
-	if strings.HasSuffix(c.kind, "y") {
-		// Ingress => Ingresses
-		kindPlurals = fmt.Sprintf("%sies", strings.TrimRight(c.kind, "y"))
-	}
-
-	method := fmt.Sprintf("kubeclient := client.%s%s().%s()", strings.Split(c.group, ".")[0], c.version, kindPlurals)
-	if _, ok := kube.KindNamespaced[c.kind]; ok {
-		method = fmt.Sprintf("kubeclient := client.%s%s().%s(\"%s\")", strings.Split(c.group, ".")[0], c.version, kindPlurals, c.namespace)
+	method := fmt.Sprintf("kubeclient := client.%s%s().%s()", strings.Split(c.group, ".")[0], c.version, c.resource)
+	if kube.KindNamespaced[c.kind] || c.namespace != "" {
+		method = fmt.Sprintf("kubeclient := client.%s%s().%s(\"%s\")", strings.Split(c.group, ".")[0], c.version, c.resource, c.namespace)
 	}
 	c.kubeClient += method
 }
 
-// addKubeManage add methods to manage job resource
-func (c *CodeGen) addKubeManage() {
+// addDynamicKubeClient adds code to create dynamic kube client
+func (c *CodeGen) addDynamicKubeClient() {
+	c.kubeClient = fmt.Sprintf(`var kubeconfig string
+	kubeconfig, ok := os.LookupEnv("KUBECONFIG")
+	if !ok {
+		kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
+	}
+
+        config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+        if err != nil {
+                panic(err)
+        }
+        client, err := dynamic.NewForConfig(config)
+        if err != nil {
+                panic(err)
+        }
+	`)
+
+	group := strings.ToLower(c.group)
+	if group == "core" {
+		group = ""
+	}
+	c.kubeClient += fmt.Sprintf("gvr := schema.GroupVersionResource{Group: \"%s\", Version: \"%s\", Resource: \"%s\"}\n", group, strings.ToLower(c.version), strings.ToLower(c.resource))
+
+	method := "kubeclient := client.Resource(gvr)"
+	if kube.KindNamespaced[c.kind] || c.namespace != "" {
+		method = fmt.Sprintf("kubeclient := client.Resource(gvr).Namespace(\"%s\")", c.namespace)
+	}
+	c.kubeClient += method
+}
+
+// addTypedKubeManage add methods to manage resource
+func (c *CodeGen) addTypedKubeManage() {
 	var method string
 
 	// Add imports
@@ -207,17 +252,17 @@ func (c *CodeGen) addKubeManage() {
 	if c.kind == crdKind {
 		clientPkg = crdClient
 	}
-	if c.client != "" {
-		clientPkg = c.client
+	if c.clientpkg != "" {
+		clientPkg = c.clientpkg
 	}
 	c.imports += fmt.Sprintf("clientset \"%s\"\n", clientPkg)
 	c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
 
 	methodStr := strings.Title(c.method.String())
 	switch c.method {
-	case MethodDelete:
+	case types.MethodDelete:
 		method = fmt.Sprintf("err = kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
-	case MethodGet:
+	case types.MethodGet:
 		method = fmt.Sprintf("found, err := kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
 	default:
 		method = fmt.Sprintf("_, err = kubeclient.%s(context.TODO(), object, metav1.%sOptions{})", methodStr, methodStr)
@@ -229,7 +274,44 @@ func (c *CodeGen) addKubeManage() {
         }
 	`, method)
 
-	if c.method != MethodGet {
+	if c.method != types.MethodGet {
+		c.kubeManage += fmt.Sprintf(`fmt.Println("%s %sd successfully!")`, c.kind, methodStr)
+		return
+	}
+
+	c.kubeManage += fmt.Sprintf(`fmt.Printf("Found object : %s", found)`, "%+v")
+}
+
+// addDynamicKubeManage add methods to manage resource
+func (c *CodeGen) addDynamicKubeManage() {
+	var method string
+
+	// Add imports
+	for _, i := range importer.CommonImports {
+		c.imports += fmt.Sprintf("\"%s\"\n", i)
+	}
+	c.imports += "\"k8s.io/client-go/dynamic\"\n"
+	c.imports += "\"k8s.io/apimachinery/pkg/runtime/schema\"\n"
+	c.imports += "metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"\n"
+
+	methodStr := strings.Title(c.method.String())
+	switch c.method {
+	case types.MethodDelete:
+		method = fmt.Sprintf("err = kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
+	case types.MethodGet:
+		method = fmt.Sprintf("found, err := kubeclient.%s(context.TODO(), \"%s\", metav1.%sOptions{})", methodStr, c.name, methodStr)
+	default:
+		c.imports += "\"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured\"\n"
+		method = fmt.Sprintf("_, err = kubeclient.%s(context.TODO(), object, metav1.%sOptions{})", methodStr, methodStr)
+	}
+
+	c.kubeManage = fmt.Sprintf(`%s
+        if err != nil {
+                panic(err)
+        }
+	`, method)
+
+	if c.method != types.MethodGet {
 		c.kubeManage += fmt.Sprintf(`fmt.Println("%s %sd successfully!")`, c.kind, methodStr)
 		return
 	}
@@ -242,7 +324,7 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 	kubeobject := fmt.Sprintf(`// Create resource object
 	object := %s`, c.kubeObject)
 
-	if c.method == MethodDelete || c.method == MethodGet {
+	if c.method == types.MethodDelete || c.method == types.MethodGet {
 		kubeobject = ""
 	}
 
@@ -275,11 +357,12 @@ func (c *CodeGen) prettyCode() (code string, err error) {
 		return code, fmt.Errorf("go fmt error: %s", err.Error())
 	}
 	return string(goFormat), nil
+
 }
 
 // cleanupObject removes fields with nil values
 func (c *CodeGen) cleanupObject() {
-	if c.method == MethodDelete || c.method == MethodGet {
+	if c.method == types.MethodDelete || c.method == types.MethodGet {
 		c.kubeObject = ""
 	}
 	kubeObject := strings.Split(c.kubeObject, "\n")
@@ -321,9 +404,14 @@ func (c *CodeGen) secretStringData() {
 }
 
 func prettyStruct(obj string) string {
-	obj = strings.Replace(obj, ", ", ",\n", -1)
-	obj = strings.Replace(obj, "{", " {\n", -1)
-	obj = strings.Replace(obj, "}", ",\n}", -1)
+	// Preserve {}, do not replace them with `{\n,}`
+	// The hack is to replace {} with special chars, and let the replacement happen
+	// where it is required, then revert back the replacement
+	obj = strings.ReplaceAll(obj, "{}", "!!")
+	obj = strings.ReplaceAll(obj, ", ", ",\n")
+	obj = strings.ReplaceAll(obj, "{", " {\n")
+	obj = strings.ReplaceAll(obj, "}", ",\n}")
+	obj = strings.ReplaceAll(obj, "!!", "{}")
 
 	// Run gofmt
 	goFormat, err := format.Source([]byte(obj))
@@ -451,9 +539,9 @@ func updateResources(object []string) []string {
 	return object
 }
 
-func setCRImports(kind, group, version, pkg string, isNamespaced bool) {
+func setCRImports(kind, group, version, pkg string, namespaced bool) {
 	kube.APIPkgMap[group] = pkg
 	kube.KindAPIMap[kind] = group
 	kube.APIVersions[version] = true
-	kube.KindNamespaced[kind] = isNamespaced
+	kube.KindNamespaced[kind] = namespaced
 }

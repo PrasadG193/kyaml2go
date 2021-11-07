@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/urfave/cli"
 	"log"
 	"os"
 
+	"github.com/urfave/cli"
+
 	"github.com/PrasadG193/kyaml2go/cmd/option"
 	gen "github.com/PrasadG193/kyaml2go/pkg/generator"
+	"github.com/PrasadG193/kyaml2go/pkg/types"
 )
 
 var flags = option.Flags
@@ -25,7 +27,7 @@ func main() {
 			Usage: "Generate code for creating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(gen.MethodCreate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(types.MethodCreate, c.Bool("cr"), c.Bool("namespaced"), c.Bool("dynamic"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
@@ -33,7 +35,7 @@ func main() {
 			Usage: "Generate code for updating a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(gen.MethodUpdate, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(types.MethodUpdate, c.Bool("cr"), c.Bool("namespaced"), c.Bool("dynamic"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
@@ -41,7 +43,7 @@ func main() {
 			Usage: "Generate code to get a resource object",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(gen.MethodGet, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(types.MethodGet, c.Bool("cr"), c.Bool("namespaced"), c.Bool("dynamic"), c.String("client"), c.String("apis"))
 			},
 		},
 		{
@@ -49,7 +51,7 @@ func main() {
 			Usage: "Generate code for deleting a resource",
 			Flags: flags,
 			Action: func(c *cli.Context) error {
-				return generate(gen.MethodDelete, c.Bool("cr"), c.Bool("namespaced"), c.String("client"), c.String("apis"))
+				return generate(types.MethodDelete, c.Bool("cr"), c.Bool("namespaced"), c.Bool("dynamic"), c.String("client"), c.String("apis"))
 			},
 		},
 	}
@@ -61,7 +63,7 @@ func main() {
 	}
 }
 
-func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string) error {
+func generate(method types.KubeMethod, isCR, namespaced, isDynamic bool, clientpkg, api string) error {
 	// Read input from the console
 	var data string
 	scanner := bufio.NewScanner(os.Stdin)
@@ -71,8 +73,8 @@ func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string
 
 	// Set default client and api packages if not passed
 	if isCR {
-		if client == "" {
-			client = "github.com/PATH/TO/TYPED/GENERATED/CLIENTSET/versioned"
+		if clientpkg == "" {
+			clientpkg = "github.com/PATH/TO/TYPED/GENERATED/CLIENTSET/versioned"
 		}
 		if api == "" {
 			api = "github.com/PATH/TO/APIS/PACKAGE/resource"
@@ -83,7 +85,7 @@ func generate(method gen.KubeMethod, isCR, isNamespaced bool, client, api string
 		log.Fatal("Error while reading input:", err)
 	}
 
-	gen := gen.New([]byte(data), method, isCR, isNamespaced, client, api)
+	gen := gen.New([]byte(data), method, isCR, namespaced, isDynamic, clientpkg, api)
 	code, err := gen.Generate()
 	if err != nil {
 		return cli.NewExitError(err, 1)

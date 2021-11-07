@@ -8,6 +8,16 @@ var Flags = []cli.Flag{
 		Usage:    "Resource is a Custom resource",
 		Required: false,
 	},
+	cli.BoolFlag{
+		Name:     "dynamic",
+		Usage:    "Generate code with dynamic client",
+		Required: false,
+	},
+	cli.BoolFlag{
+		Name:     "namespaced",
+		Usage:    "Generate code for namespaced scoped resource",
+		Required: false,
+	},
 	cli.StringFlag{
 		Name:     "apis",
 		Usage:    "Custom resource api def package (without version)",

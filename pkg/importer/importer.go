@@ -8,6 +8,7 @@ import (
 
 	"github.com/PrasadG193/kyaml2go/pkg/kube"
 	"github.com/PrasadG193/kyaml2go/pkg/stack"
+	"github.com/PrasadG193/kyaml2go/pkg/types"
 )
 
 // CommonImports contains common packages required for all the resources
@@ -32,7 +33,7 @@ type ImportManager struct {
 }
 
 // New returns an instance of ImportManager
-func New(kind, group, version, obj, cliPkg string) ImportManager {
+func New(kind, group, version, obj, cliPkg string, clientType types.Client) ImportManager {
 	im := ImportManager{
 		Kind:    kind,
 		Group:   group,
