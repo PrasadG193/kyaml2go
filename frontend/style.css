@@ -33,13 +33,19 @@ label {
 }
 
 .button_yaml {
-  height: 50px;
   top: 50%;
   margin: auto;
   left: 0;
   right: 0;
 }
 #selectaction {
+  margin: auto;
+  vertical-align: middle;
+  padding: 5px;
+  background-color: white;
+  border-radius: 3px;
+}
+#selectclient {
   margin: auto;
   vertical-align: middle;
   padding: 5px;
@@ -260,6 +266,10 @@ button:focus {
 
 #cr_params {
   display: none;
+}
+
+#cr_box {
+  display: block;
 }
 
 #cr_ip {

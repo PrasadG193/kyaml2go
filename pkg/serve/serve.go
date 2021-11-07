@@ -40,6 +40,7 @@ func (rh *RequestHandler) HandleConvert(w http.ResponseWriter, r *http.Request, 
 	urlPQ, _ := url.ParseQuery(r.URL.RawQuery)
 	method := urlPQ.Get("method")
 	cr := urlPQ.Get("cr")
+	isDynamic := urlPQ.Get("dynamic")
 	if method == "" {
 		method = "create"
 	}
@@ -47,7 +48,9 @@ func (rh *RequestHandler) HandleConvert(w http.ResponseWriter, r *http.Request, 
 	if cr != "" {
 		args = append(args, []string{"--cr", "--apis", urlPQ.Get("apis"), "--client", urlPQ.Get("client"), "--scheme", urlPQ.Get("scheme")}...)
 	}
-
+	if isDynamic != "" {
+		args = append(args, "--dynamic")
+	}
 	log.Printf("Incoming request. %s/bin/kyaml2go %v %s", os.Getenv("GOPATH"), args, string(body))
 	code, err := execute(fmt.Sprintf("%s/bin/kyaml2go", os.Getenv("GOPATH")), args, string(body))
 	if err != nil {
