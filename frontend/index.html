@@ -102,11 +102,10 @@
             <img src="./image/icn_delete.png" alt="delete" class="clear_code pointer" id="clearYaml" />
           </div>
           <div class="button_yaml" id="dd_wrapper">
-            <select id="selectclient"> 
-              <option value="type_client" title="Kubernetes typed client set">Typed</option>
-              <option value="type_dynamic" title="Kubernetes dynamic client set">Dynamic</option>
-            </select>
-            <br>
+            <input type="radio" id="typed_client" name="client" value="typed_client" checked="checked">
+            <label for="typed_client">Typed</label><br>
+            <input type="radio" id="dynamic_client" name="client" value="dynamic_client">
+            <label for="dynamic_client">Dynamic</label><br>
             <hr>
             <div id="cr_box" style="text-align: center;">
             <label for="Is CR?">Is CR?</label>

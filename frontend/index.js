@@ -42,7 +42,7 @@ go = CodeMirror.fromTextArea(document.getElementById("goGenerator"), {
 
 window.generatorCall = function (client, action, query) {
 	URL = formGooleFuncURL(action) + query;
-	if (client == "type_dynamic") {
+	if (dynamic_client.checked == true) {
 		URL = URL + "&dynamic=true";
 	}
 
@@ -95,11 +95,14 @@ function getValue(id) {
 	return v;
 }
 
-client = document.getElementById("selectclient");
+typed_client = document.getElementById("typed_client");
+dynamic_client = document.getElementById("dynamic_client");
 
 //Convert
 dropDown = document.getElementById("selectaction");
-document.getElementById("convert").addEventListener("click", () => {
+document.getElementById("convert").addEventListener("click", convert);
+
+function convert() {
 	action = dropDown.value;
 	if (action != "select") {
 		hideError();
@@ -126,7 +129,7 @@ document.getElementById("convert").addEventListener("click", () => {
 	} else {
 		displayError("Please select the method.");
 	}
-});
+}
 
 //Clear YAML
 document.getElementById("clearYaml").addEventListener("click", () => {
@@ -173,19 +176,23 @@ document.getElementById("cr_check").addEventListener("change", function () {
 	}
 });
 
-document.getElementById("selectclient").addEventListener("change", function () {
-	if (client.value == "type_dynamic") {
+document.getElementById("dynamic_client").addEventListener("change", displayCRParams);
+document.getElementById("typed_client").addEventListener("change", displayCRParams);
+
+function displayCRParams() {
+	if (dynamic_client.checked == true) {
 		document.getElementById("cr_box").style.display = "none";
 		document.getElementById("cr_params").style.display = "none";
-		setDynamicClientDeploySample()
-		go.setValue("");
+		convert()
 	} else {
 		document.getElementById("cr_box").style.display = "block";
 		if (isCRChecked()) {
 			document.getElementById("cr_params").style.display = "block";
+		} else {
+			convert()
 		}
 	}
-});
+}
 
 function setDeploymentSample() {
 	// Add sample input
@@ -213,7 +220,7 @@ spec:
           name: http
           protocol: TCP
 `);
-	if (client.value == "type_dynamic") {
+	if (dynamic_client.checked == true) {
 		setDynamicClientDeploySample()
 	} else {
 		setTypedClientDeploySample()
@@ -424,7 +431,7 @@ spec:
   deploymentName: example-foo
   replicas: 1
    `);
-	if (client.value == "type_dynamic") {
+	if (dynamic_client.checked == true) {
 		setDynamicClientCRSample()
 	} else {
 		setTypedClientCRSample()
