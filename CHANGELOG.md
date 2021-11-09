@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.3.0](https://github.com/PrasadG193/kyaml2go/tree/v0.3.0) (2021-11-09)
+
+[Full Changelog](https://github.com/PrasadG193/kyaml2go/compare/v0.2.0...v0.3.0)
+
+**Closed issues:**
+
+- Support for generating go code for CR created with Dynamic client go  [\#41](https://github.com/PrasadG193/kyaml2go/issues/41)
+- \[UI\] Display error message on dashboard returned by backend [\#33](https://github.com/PrasadG193/kyaml2go/issues/33)
+- Add support for custom resources [\#13](https://github.com/PrasadG193/kyaml2go/issues/13)
+
+**Merged pull requests:**
+
+- Use radio buttons for client type [\#46](https://github.com/PrasadG193/kyaml2go/pull/46) ([PrasadG193](https://github.com/PrasadG193))
+- Add support for dynamic client [\#45](https://github.com/PrasadG193/kyaml2go/pull/45) ([PrasadG193](https://github.com/PrasadG193))
+- Bump client-go dep version to v0.22.2 [\#44](https://github.com/PrasadG193/kyaml2go/pull/44) ([PrasadG193](https://github.com/PrasadG193))
+- Add dark mode and minor css fixed [\#43](https://github.com/PrasadG193/kyaml2go/pull/43) ([bajran](https://github.com/bajran))
+
 ## [v0.2.0](https://github.com/PrasadG193/kyaml2go/tree/v0.2.0) (2021-01-17)
 
 [Full Changelog](https://github.com/PrasadG193/kyaml2go/compare/v0.1.0...v0.2.0)
